@@ -4,80 +4,153 @@
              x:Class="HabitTracker.Views.MainPage"
              Title="Трекер привычек">
 
-    <ContentPage.BindingContext>
-        <viewmodel:MainViewModel xmlns:viewmodel="clr-namespace:HabitTracker.ViewModels" />
-    </ContentPage.BindingContext>
+    <StackLayout Padding="20" Spacing="20">
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="20" Padding="20">
+        <!-- Заголовок -->
+        <Label Text="Трекер привычек" 
+               FontSize="24" 
+               FontAttributes="Bold"
+               HorizontalOptions="Center"/>
 
-            <!-- Заголовок -->
-            <Label Text="Трекер привычек" 
-                   FontSize="32" 
+        <!-- Дата -->
+        <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+            <Button Text="◀" 
+                    x:Name="PrevDayBtn"
+                    WidthRequest="40"/>
+
+            <Label x:Name="DateLabel"
+                   Text="01.01.2024"
+                   FontSize="16"
+                   VerticalOptions="Center"
+                   WidthRequest="150"
+                   HorizontalTextAlignment="Center"/>
+
+            <Button Text="▶" 
+                    x:Name="NextDayBtn"
+                    WidthRequest="40"/>
+        </HorizontalStackLayout>
+
+        <!-- Настроение -->
+        <StackLayout Spacing="10">
+            <Label Text="Настроение дня" 
+                   FontSize="18" 
                    FontAttributes="Bold"
                    HorizontalOptions="Center"/>
 
-            <!-- Дата -->
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                <Button Text="◀" 
-                        Command="{Binding PreviousDayCommand}"
-                        WidthRequest="40"/>
+            <Label x:Name="MoodDescriptionLabel"
+                   Text="Нейтрально"
+                   FontSize="16"
+                   HorizontalOptions="Center"/>
 
-                <Label Text="{Binding SelectedDate, StringFormat='{0:dd.MM.yyyy}'}"
-                       FontSize="18"
-                       VerticalOptions="Center"
-                       WidthRequest="150"/>
+            <!-- 7 кнопок настроения ВНУТРИ Border -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="5">
 
-                <Button Text="▶" 
-                        Command="{Binding NextDayCommand}"
-                        WidthRequest="40"/>
+                <Border x:Name="MoodBorder1" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn1"
+                            Text="1"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
 
-                <Button Text="Сегодня"
-                        Command="{Binding TodayCommand}"
-                        WidthRequest="100"/>
+                <Border x:Name="MoodBorder2" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn2"
+                            Text="2"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
+                <Border x:Name="MoodBorder3" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn3"
+                            Text="3"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
+                <Border x:Name="MoodBorder4" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn4"
+                            Text="4"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
+                <Border x:Name="MoodBorder5" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn5"
+                            Text="5"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
+                <Border x:Name="MoodBorder6" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn6"
+                            Text="6"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
+                <Border x:Name="MoodBorder7" 
+                       Stroke="Transparent" 
+                       StrokeThickness="0"
+                       Padding="0"
+                       StrokeShape="RoundRectangle 20">
+                    <Button x:Name="MoodBtn7"
+                            Text="7"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Border>
+
             </HorizontalStackLayout>
 
-            <!-- Настроение -->
-            <Frame BackgroundColor="LightGray" Padding="15">
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Настроение дня" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
+            <!-- Подписи -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="30">
+                <Label Text="Плохо" FontSize="12"/>
+                <Label Text="Нейтрально" FontSize="12"/>
+                <Label Text="Отлично" FontSize="12"/>
+            </HorizontalStackLayout>
+        </StackLayout>
 
-                    <BoxView Color="{Binding MoodColor}"
-                             HeightRequest="30"
-                             CornerRadius="15"
-                             HorizontalOptions="Fill"/>
+        <!-- Привычки -->
+        <StackLayout Spacing="10">
+            <Label Text="Привычки" 
+                   FontSize="18" 
+                   FontAttributes="Bold"/>
 
-                    <Label Text="{Binding MoodDescription}"
-                           FontSize="16"
-                           HorizontalOptions="Center"/>
+            <Button x:Name="AddHabitBtn"
+                    Text="+ Добавить привычку"
+                    HorizontalOptions="Center"/>
 
-                    <Button Text="Выбрать настроение"
-                            Command="{Binding SetTestMoodCommand}"
-                            BackgroundColor="#2196F3"
-                            TextColor="White"
-                            HeightRequest="40"/>
-                </VerticalStackLayout>
-            </Frame>
+            <!-- Список привычек -->
+            <StackLayout x:Name="HabitsContainer"
+                         Spacing="5"/>
+        </StackLayout>
 
-            <!-- Переход в календарь -->
-            <Button Text="📅 Открыть календарь" 
-                    Command="{Binding GoToCalendarCommand}"
-                    BackgroundColor="#4CAF50"
-                    TextColor="White"
-                    FontSize="16"
-                    HeightRequest="50"
-                    CornerRadius="10"/>
+        <!-- Кнопки -->
+        <Button x:Name="CalendarBtn"
+                Text="Календарь" 
+                HorizontalOptions="Center"/>
 
-            <!-- Тестовая кнопка -->
-            <Button Text="Тест: показать дату"
-                    Clicked="OnTestButtonClicked"
-                    BackgroundColor="#FF9800"
-                    TextColor="White"
-                    HeightRequest="40"/>
-
-        </VerticalStackLayout>
-    </ScrollView>
+    </StackLayout>
 </ContentPage>

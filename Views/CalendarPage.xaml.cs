@@ -5,10 +5,11 @@ public partial class CalendarPage : ContentPage
     public CalendarPage()
     {
         InitializeComponent();
+        BackBtn.Clicked += OnBackButtonClicked;
     }
 
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync("..");
+        await Navigation.PopAsync();
     }
 }

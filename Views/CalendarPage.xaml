@@ -11,13 +11,13 @@
                FontAttributes="Bold"
                HorizontalOptions="Center"/>
 
-        <Label Text="Здесь будет отображаться календарь с вашими привычками"
+        <Label Text="Эта страница пока в разработке"
                FontSize="16"
                HorizontalOptions="Center"
                TextColor="Gray"/>
 
-        <Button Text="⬅ Вернуться на главную" 
-                Clicked="OnBackButtonClicked"
+        <Button x:Name="BackBtn"
+                Text="⬅ Вернуться на главную" 
                 BackgroundColor="#2196F3"
                 TextColor="White"
                 FontSize="16"
