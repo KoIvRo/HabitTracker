@@ -2,37 +2,15 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HabitTracker.Views.MainPage"
-             Title="Трекер привычек"
+             Title="Today"
              BackgroundColor="#121212">
 
     <ScrollView>
         <StackLayout Padding="15" Spacing="15">
 
-            <!-- Заголовок и кнопки -->
-            <HorizontalStackLayout Spacing="10">
-                <Label Text="HabitTracker" 
-                       FontSize="20" 
-                       FontAttributes="Bold"
-                       TextColor="#BB86FC"
-                       VerticalOptions="Center"/>
-
-                <BoxView HorizontalOptions="FillAndExpand"
-                         Color="Transparent"/>
-
-                <Button Text="📋 База"
-                        x:Name="BaseHabitsBtn"
-                        Clicked="OnBaseHabitsClicked"
-                        BackgroundColor="#424242"
-                        TextColor="White"
-                        FontSize="14"
-                        HeightRequest="35"
-                        CornerRadius="8"/>
-            </HorizontalStackLayout>
-
-            <!-- Дата -->
+            <!-- Date -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
-                    StrokeShape="RoundRectangle 10"
                     BackgroundColor="#1E1E1E"
                     Padding="15">
                 <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
@@ -63,48 +41,25 @@
                 </HorizontalStackLayout>
             </Border>
 
-            <!-- Информация о дне -->
+            <!-- Mood -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
-                    StrokeShape="RoundRectangle 10"
-                    BackgroundColor="#1E1E1E"
-                    Padding="15">
-                <StackLayout Spacing="8">
-                    <Label Text="Текущий день" 
-                           FontSize="16" 
-                           FontAttributes="Bold"
-                           TextColor="#BB86FC"
-                           HorizontalOptions="Center"/>
-
-                    <Label x:Name="DayInfoLabel"
-                           Text="Вы просматриваете сегодняшний день. Вы можете отмечать выполнение привычек."
-                           FontSize="14"
-                           TextColor="#BBBBBB"
-                           HorizontalOptions="Center"
-                           LineBreakMode="WordWrap"/>
-                </StackLayout>
-            </Border>
-
-            <!-- Настроение -->
-            <Border Stroke="#333333"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 10"
                     BackgroundColor="#1E1E1E"
                     Padding="15">
                 <StackLayout Spacing="10">
-                    <Label Text="Настроение дня" 
+                    <Label Text="Daily Mood" 
                            FontSize="18" 
                            FontAttributes="Bold"
                            TextColor="White"
                            HorizontalOptions="Center"/>
 
                     <Label x:Name="MoodDescriptionLabel"
-                           Text="Нейтрально"
+                           Text="Neutral"
                            FontSize="16"
                            TextColor="#BBBBBB"
                            HorizontalOptions="Center"/>
 
-                    <!-- 7 цветных кнопок настроения -->
+                    <!-- 7 mood buttons -->
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
                         <Button x:Name="MoodBtn1"
                                 Text="1"
@@ -155,38 +110,24 @@
                                 CornerRadius="21"
                                 FontSize="14"/>
                     </HorizontalStackLayout>
-
-                    <!-- Подписи -->
-                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="30">
-                        <Label Text="Плохо" 
-                               FontSize="12"
-                               TextColor="#8A2BE2"/>
-                        <Label Text="Нейтрально" 
-                               FontSize="12"
-                               TextColor="#A9A9A9"/>
-                        <Label Text="Отлично" 
-                               FontSize="12"
-                               TextColor="#DC143C"/>
-                    </HorizontalStackLayout>
                 </StackLayout>
             </Border>
 
-            <!-- Привычки -->
+            <!-- Notes -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
-                    StrokeShape="RoundRectangle 10"
                     BackgroundColor="#1E1E1E"
                     Padding="15">
                 <StackLayout Spacing="12">
                     <HorizontalStackLayout>
-                        <Label Text="Привычки на этот день" 
+                        <Label Text="Notes" 
                                FontSize="18" 
                                FontAttributes="Bold"
                                TextColor="White"
                                HorizontalOptions="StartAndExpand"/>
 
                         <Button x:Name="AddHabitBtn"
-                                Text="+ Добавить"
+                                Text="Add"
                                 BackgroundColor="#BB86FC"
                                 TextColor="White"
                                 FontSize="14"
@@ -194,33 +135,11 @@
                                 CornerRadius="8"/>
                     </HorizontalStackLayout>
 
-                    <!-- Список привычек -->
+                    <!-- Notes list -->
                     <StackLayout x:Name="HabitsContainer"
                                  Spacing="8"/>
                 </StackLayout>
             </Border>
-
-            <!-- Кнопки -->
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                <Button x:Name="CalendarBtn"
-                        Text="📅 Календарь" 
-                        BackgroundColor="#424242"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="45"
-                        CornerRadius="10"
-                        Grid.Column="0"/>
-
-                <Button x:Name="BaseHabitsBtn2"
-                        Text="📋 Управление базой" 
-                        BackgroundColor="#BB86FC"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="45"
-                        CornerRadius="10"
-                        Grid.Column="1"
-                        Clicked="OnBaseHabitsClicked"/>
-            </Grid>
 
         </StackLayout>
     </ScrollView>

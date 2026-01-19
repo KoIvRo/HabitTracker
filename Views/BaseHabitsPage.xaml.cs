@@ -1,6 +1,5 @@
 ﻿using HabitTracker.Database;
 using HabitTracker.Models;
-using Microsoft.Maui.Controls.Shapes;
 using System.Diagnostics;
 
 namespace HabitTracker.Views;
@@ -19,7 +18,7 @@ public partial class BaseHabitsPage : ContentPage
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка инициализации: {ex.Message}");
+            Debug.WriteLine($"Initialization error: {ex.Message}");
         }
     }
 
@@ -33,14 +32,13 @@ public partial class BaseHabitsPage : ContentPage
     {
         try
         {
-            // Загружаем только активные базовые привычки
+            // Load only active basic habits
             _baseHabits = await _database.GetBaseHabitsAsync();
             UpdateHabitsUI();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка загрузки базовых привычек: {ex.Message}");
-            await DisplayAlert("Ошибка", $"Не удалось загрузить базовые привычки: {ex.Message}", "OK");
+            Debug.WriteLine($"Error loading basic habits: {ex.Message}");
         }
     }
 
@@ -52,7 +50,7 @@ public partial class BaseHabitsPage : ContentPage
         {
             var emptyLabel = new Label
             {
-                Text = "Нет базовых привычек. Добавьте первую!",
+                Text = "No basic habits. Add first one!",
                 FontSize = 16,
                 TextColor = Color.FromArgb("#888888"),
                 HorizontalOptions = LayoutOptions.Center,
@@ -70,13 +68,13 @@ public partial class BaseHabitsPage : ContentPage
 
     private void AddHabitToUI(Habit habit)
     {
-        var habitBorder = new Border
+        var frame = new Frame
         {
             Padding = 12,
             BackgroundColor = Color.FromArgb("#2D2D2D"),
-            Stroke = Color.FromArgb("#4CAF50"),
-            StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) }
+            BorderColor = Color.FromArgb("#4CAF50"),
+            CornerRadius = 8,
+            HasShadow = false
         };
 
         var habitLayout = new HorizontalStackLayout
@@ -95,7 +93,7 @@ public partial class BaseHabitsPage : ContentPage
 
         var deleteBtn = new Button
         {
-            Text = "🗑 Удалить",
+            Text = "Delete",
             Padding = new Thickness(10, 5),
             BackgroundColor = Color.FromArgb("#D32F2F"),
             TextColor = Colors.White,
@@ -103,37 +101,32 @@ public partial class BaseHabitsPage : ContentPage
             CornerRadius = 8
         };
 
-        // Обработчик удаления базовой привычки из будущих дней
+        // Handler for deleting basic habit from future days
         deleteBtn.Clicked += async (s, e) =>
         {
             bool confirm = await DisplayAlert(
-                "Удаление базовой привычки",
-                $"Удалить базовую привычку \"{habit.Name}\" из будущих дней?\n\n" +
-                "✓ Не будет появляться в будущих днях\n" +
-                "✓ Останется в прошедших днях\n" +
-                "✓ Чтобы удалить из сегодняшнего дня, сделайте это на главной странице",
-                "Удалить из будущих",
-                "Отмена");
+                "Delete basic habit",
+                $"Delete basic habit \"{habit.Name}\" from future days?\n\n" +
+                "✓ Will not appear in future days\n" +
+                "✓ Will remain in past days\n" +
+                "✓ To remove from today, do it on main page",
+                "Delete from future",
+                "Cancel");
 
             if (confirm)
             {
                 try
                 {
-                    // Удаляем привычку из будущих дней
+                    // Remove habit from future days
                     var success = await _database.RemoveBaseHabitFromFutureAsync(habit.Id);
                     if (success)
                     {
                         LoadBaseHabits();
-                        await DisplayAlert("Успех", $"Привычка \"{habit.Name}\" удалена из будущих дней", "OK");
-                    }
-                    else
-                    {
-                        await DisplayAlert("Ошибка", "Не удалось удалить привычку", "OK");
                     }
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert("Ошибка", $"Не удалось удалить привычку: {ex.Message}", "OK");
+                    await DisplayAlert("Error", $"Failed to delete habit: {ex.Message}", "OK");
                 }
             }
         };
@@ -141,30 +134,30 @@ public partial class BaseHabitsPage : ContentPage
         habitLayout.Children.Add(habitLabel);
         habitLayout.Children.Add(deleteBtn);
 
-        habitBorder.Content = habitLayout;
-        HabitsContainer.Children.Add(habitBorder);
+        frame.Content = habitLayout;
+        HabitsContainer.Children.Add(frame);
     }
 
     private async void OnAddHabitClicked(object sender, EventArgs e)
     {
         string habitName = await DisplayPromptAsync(
-            "Новая базовая привычка",
-            "Введите название привычки, которая будет автоматически добавляться во все будущие дни:",
-            "Добавить",
-            "Отмена",
+            "New basic habit",
+            "Enter habit name (will be added to all future days):",
+            "Add",
+            "Cancel",
             maxLength: 50);
 
         if (!string.IsNullOrWhiteSpace(habitName))
         {
-            // Проверяем, не существует ли уже такая привычка
+            // Check if habit already exists
             var exists = await _database.HabitExistsAsync(habitName);
             if (exists)
             {
-                await DisplayAlert("Внимание", "Привычка с таким названием уже существует.", "OK");
+                await DisplayAlert("Warning", "Habit with this name already exists.", "OK");
                 return;
             }
 
-            // Создаем базовую привычку
+            // Create basic habit
             var habit = new Habit
             {
                 Name = habitName.Trim(),
@@ -174,7 +167,7 @@ public partial class BaseHabitsPage : ContentPage
             };
             await _database.AddHabitAsync(habit);
             LoadBaseHabits();
-            await DisplayAlert("Успех", "Базовая привычка добавлена", "OK");
+            await DisplayAlert("Success", "Basic habit added", "OK");
         }
     }
 }
