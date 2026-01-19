@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace HabitTracker.Views;
 
+[QueryProperty(nameof(SelectedDateString), "date")]
 public partial class MainPage : ContentPage
 {
     private DateTime _selectedDate = DateTime.Today;
@@ -11,6 +12,22 @@ public partial class MainPage : ContentPage
     private DatabaseContext _database;
     private List<Habit> _habits = new();
     private Dictionary<int, bool> _habitCompletionStatus = new();
+
+    public string SelectedDateString
+    {
+        set
+        {
+            if (!string.IsNullOrEmpty(value) && DateTime.TryParse(value, out var date))
+            {
+                _selectedDate = date.Date;
+                // Обновляем данные сразу, если страница уже загружена
+                if (_database != null)
+                {
+                    LoadData();
+                }
+            }
+        }
+    }
 
     public MainPage()
     {
@@ -35,6 +52,9 @@ public partial class MainPage : ContentPage
             MoodBtn5.Clicked += (s, e) => SetMood(5);
             MoodBtn6.Clicked += (s, e) => SetMood(6);
             MoodBtn7.Clicked += (s, e) => SetMood(7);
+
+            // Добавляем обработчики для наведения на кнопки настроения
+            AddHoverEffectsToMoodButtons();
         }
         catch (Exception ex)
         {
@@ -45,6 +65,9 @@ public partial class MainPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        // Если пришли из календаря с датой, она уже установлена через QueryProperty
+        // Просто загружаем данные
         LoadData();
     }
 
@@ -211,6 +234,193 @@ public partial class MainPage : ContentPage
         MoodBtn7.BorderWidth = 0;
     }
 
+    private void AddHoverEffectsToMoodButtons()
+    {
+        // Добавляем обработчики событий для всех кнопок настроения
+        var buttons = new[] { MoodBtn1, MoodBtn2, MoodBtn3, MoodBtn4, MoodBtn5, MoodBtn6, MoodBtn7 };
+
+        foreach (var button in buttons)
+        {
+            // Сохраняем оригинальные свойства
+            var originalScale = button.Scale;
+            var originalBorderColor = button.BorderColor;
+            var originalBorderWidth = button.BorderWidth;
+
+            // Обработчик наведения (MouseOver для Windows, Pointer для других платформ)
+            button.HandlerChanged += (s, e) =>
+            {
+                if (button.Handler?.PlatformView is object platformView)
+                {
+#if WINDOWS
+                    var uiElement = platformView as Microsoft.UI.Xaml.FrameworkElement;
+                    if (uiElement != null)
+                    {
+                        uiElement.PointerEntered += (sender, args) =>
+                        {
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                // Анимация увеличения
+                                button.ScaleTo(1.2, 100, Easing.CubicInOut);
+                                button.BorderColor = Colors.White;
+                                button.BorderWidth = 2;
+                                
+                                // Добавляем свечение
+                                button.Shadow = new Shadow
+                                {
+                                    Brush = new SolidColorBrush(Colors.White),
+                                    Offset = new Point(0, 0),
+                                    Radius = 15,
+                                    Opacity = 1
+                                };
+                            });
+                        };
+
+                        uiElement.PointerExited += (sender, args) =>
+                        {
+                            MainThread.BeginInvokeOnMainThread(() =>
+                            {
+                                // Анимация уменьшения
+                                button.ScaleTo(1.0, 100, Easing.CubicInOut);
+                                
+                                // Восстанавливаем оригинальные значения
+                                button.BorderColor = originalBorderColor;
+                                button.BorderWidth = originalBorderWidth;
+                                
+                                // Убираем свечение
+                                button.Shadow = null;
+                                
+                                // Обновляем выделение если это выбранная кнопка
+                                int buttonIndex = Array.IndexOf(buttons, button) + 1;
+                                if (buttonIndex == _currentMood)
+                                {
+                                    button.BorderColor = Color.FromArgb("#BB86FC");
+                                    button.BorderWidth = 3;
+                                }
+                            });
+                        };
+                    }
+#endif
+                }
+            };
+
+            // Простой кросс-платформенный подход с использованием GestureRecognizers
+            var tapGestureRecognizer = new TapGestureRecognizer();
+            var panGestureRecognizer = new PanGestureRecognizer();
+
+            // Добавляем обработчики жестов
+            var gestureRecognizers = new IGestureRecognizer[]
+            {
+                tapGestureRecognizer,
+                panGestureRecognizer
+            };
+
+            foreach (var gesture in gestureRecognizers)
+            {
+                button.GestureRecognizers.Add(gesture);
+            }
+
+            // Альтернативный подход: используем события, которые доступны в MAUI
+            AddMauiHoverEffects(button, buttons);
+        }
+    }
+
+    private void AddMauiHoverEffects(Button button, Button[] allButtons)
+    {
+        // Используем доступные в MAUI события
+        bool isHovering = false;
+
+        // Для десктопных платформ (Windows, macOS)
+        button.HandlerChanged += (s, e) =>
+        {
+#if WINDOWS
+            if (button.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.Button winButton)
+            {
+                winButton.PointerEntered += (sender, args) =>
+                {
+                    isHovering = true;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        OnMoodButtonHover(button, allButtons, true);
+                    });
+                };
+
+                winButton.PointerExited += (sender, args) =>
+                {
+                    isHovering = false;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        OnMoodButtonHover(button, allButtons, false);
+                    });
+                };
+            }
+#endif
+
+#if MACCATALYST || IOS
+            // Для iOS/Mac используем Touch события
+            button.HandlerChanged += (s, e) =>
+            {
+                // iOS не поддерживает ховер, используем тап
+            };
+#endif
+        };
+
+        // Простой подход через анимацию при нажатии и отпускании
+        button.Pressed += (s, e) =>
+        {
+            // Сохраняем состояние нажатия
+            button.ScaleTo(1.1, 50, Easing.CubicInOut);
+        };
+
+        button.Released += (s, e) =>
+        {
+            // Возвращаем к нормальному размеру
+            button.ScaleTo(1.0, 50, Easing.CubicInOut);
+        };
+    }
+
+    private void OnMoodButtonHover(Button button, Button[] allButtons, bool isHovering)
+    {
+        int buttonIndex = Array.IndexOf(allButtons, button) + 1;
+        bool isSelected = buttonIndex == _currentMood;
+
+        if (isHovering)
+        {
+            // Анимация увеличения при наведении
+            button.ScaleTo(1.2, 100, Easing.CubicInOut);
+            button.BorderColor = Colors.White;
+            button.BorderWidth = 2;
+
+            // Добавляем свечение
+            button.Shadow = new Shadow
+            {
+                Brush = new SolidColorBrush(Colors.White),
+                Offset = new Point(0, 0),
+                Radius = 15,
+                Opacity = 1
+            };
+        }
+        else
+        {
+            // Анимация уменьшения при уходе курсора
+            button.ScaleTo(1.0, 100, Easing.CubicInOut);
+
+            // Восстанавливаем состояние
+            if (isSelected)
+            {
+                button.BorderColor = Color.FromArgb("#BB86FC");
+                button.BorderWidth = 3;
+            }
+            else
+            {
+                button.BorderColor = Colors.Transparent;
+                button.BorderWidth = 0;
+            }
+
+            // Убираем свечение
+            button.Shadow = null;
+        }
+    }
+
     private async void SetMood(int mood)
     {
         // Check if mood can be changed for this date
@@ -281,7 +491,6 @@ public partial class MainPage : ContentPage
             };
             await _database.AddHabitAsync(habit);
             LoadData();
-            await DisplayAlert("Success", "Note added", "OK");
         }
     }
 
@@ -289,31 +498,46 @@ public partial class MainPage : ContentPage
     {
         var frame = new Frame
         {
-            Padding = 12,
+            Padding = new Thickness(12, 8),
             BackgroundColor = Color.FromArgb("#2D2D2D"),
             BorderColor = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC"),
             CornerRadius = 8,
             HasShadow = false
         };
 
-        var habitLayout = new HorizontalStackLayout
+        var habitLayout = new Grid
         {
-            Spacing = 10
+            ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = GridLength.Star }, // Name
+                new ColumnDefinition { Width = GridLength.Auto }, // Check button
+                new ColumnDefinition { Width = GridLength.Auto }  // Delete button
+            },
+            ColumnSpacing = 10
         };
 
-        var habitLabel = new StackLayout
+        // Habit name with strike-through if completed
+        var isCompleted = _habitCompletionStatus.ContainsKey(habit.Id) && _habitCompletionStatus[habit.Id];
+
+        var nameStack = new StackLayout
         {
             Spacing = 2,
-            VerticalOptions = LayoutOptions.Center,
-            HorizontalOptions = LayoutOptions.StartAndExpand
+            VerticalOptions = LayoutOptions.Center
         };
 
         var nameLabel = new Label
         {
             Text = habit.Name,
             FontSize = 16,
-            TextColor = Colors.White
+            TextColor = isCompleted ? Color.FromArgb("#888888") : Colors.White,
+            VerticalOptions = LayoutOptions.Center
         };
+
+        // Add strike-through effect for completed habits
+        if (isCompleted)
+        {
+            nameLabel.TextDecorations = TextDecorations.Strikethrough;
+        }
 
         var typeLabel = new Label
         {
@@ -322,72 +546,67 @@ public partial class MainPage : ContentPage
             TextColor = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC")
         };
 
-        habitLabel.Children.Add(nameLabel);
-        habitLabel.Children.Add(typeLabel);
+        nameStack.Children.Add(nameLabel);
+        nameStack.Children.Add(typeLabel);
 
-        var doneBtn = new Button
+        Grid.SetColumn(nameStack, 0);
+        habitLayout.Children.Add(nameStack);
+
+        // Check button (✓) - ФИОЛЕТОВАЯ галочка
+        var checkButton = new Button
         {
             Text = "✓",
+            FontSize = 16,
             WidthRequest = 40,
             HeightRequest = 40,
             CornerRadius = 20,
-            BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && _habitCompletionStatus[habit.Id]
-                ? Color.FromArgb("#4CAF50")
-                : Color.FromArgb("#1B5E20"),
-            TextColor = Colors.White
+            BackgroundColor = isCompleted ? Color.FromArgb("#BB86FC") : Color.FromArgb("#2D2D2D"),
+            TextColor = isCompleted ? Colors.White : Color.FromArgb("#555555"),
+            BorderColor = isCompleted ? Color.FromArgb("#BB86FC") : Color.FromArgb("#555555"),
+            BorderWidth = 1,
+            Opacity = 0.9
         };
 
-        var notDoneBtn = new Button
+        // Delete button (🗑) - кнопка удаления
+        var deleteButton = new Button
         {
-            Text = "✗",
+            Text = "✕",
+            FontSize = 16,
             WidthRequest = 40,
             HeightRequest = 40,
             CornerRadius = 20,
-            BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && !_habitCompletionStatus[habit.Id]
-                ? Color.FromArgb("#F44336")
-                : Color.FromArgb("#B71C1C"),
-            TextColor = Colors.White
+            BackgroundColor = Color.FromArgb("#2D2D2D"),
+            TextColor = Color.FromArgb("#FF5252"),
+            BorderColor = Color.FromArgb("#FF5252"),
+            BorderWidth = 1,
+            Opacity = 0.9
         };
 
-        var deleteBtn = new Button
-        {
-            Text = "🗑",
-            WidthRequest = 40,
-            HeightRequest = 40,
-            CornerRadius = 20,
-            BackgroundColor = Color.FromArgb("#424242"),
-            TextColor = Colors.White
-        };
+        // Добавляем обработчики событий для кнопок привычек
+        AddHoverEffectsToHabitButtons(checkButton, deleteButton, isCompleted);
 
         // Activate buttons only for today
         bool canModify = _selectedDate.Date == DateTime.Today.Date;
-        doneBtn.IsEnabled = canModify;
-        notDoneBtn.IsEnabled = canModify;
-        deleteBtn.IsEnabled = canModify;
+        checkButton.IsEnabled = canModify;
+        deleteButton.IsEnabled = canModify;
 
         if (!canModify)
         {
-            doneBtn.BackgroundColor = Color.FromArgb("#555555");
-            notDoneBtn.BackgroundColor = Color.FromArgb("#555555");
-            deleteBtn.BackgroundColor = Color.FromArgb("#555555");
+            checkButton.Opacity = 0.3;
+            deleteButton.Opacity = 0.3;
+            checkButton.TextColor = Color.FromArgb("#555555");
+            deleteButton.TextColor = Color.FromArgb("#555555");
         }
 
         // Handlers
-        doneBtn.Clicked += async (s, e) =>
+        checkButton.Clicked += async (s, e) =>
         {
             if (!canModify) return;
-            await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, true);
+            await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, !isCompleted);
             LoadData();
         };
 
-        notDoneBtn.Clicked += async (s, e) =>
-        {
-            if (!canModify) return;
-            await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, false);
-            LoadData();
-        };
-
-        deleteBtn.Clicked += async (s, e) =>
+        deleteButton.Clicked += async (s, e) =>
         {
             if (!canModify) return;
 
@@ -446,12 +665,82 @@ public partial class MainPage : ContentPage
             }
         };
 
-        habitLayout.Children.Add(habitLabel);
-        habitLayout.Children.Add(doneBtn);
-        habitLayout.Children.Add(notDoneBtn);
-        habitLayout.Children.Add(deleteBtn);
+        Grid.SetColumn(checkButton, 1);
+        Grid.SetColumn(deleteButton, 2);
+
+        habitLayout.Children.Add(checkButton);
+        habitLayout.Children.Add(deleteButton);
 
         frame.Content = habitLayout;
         HabitsContainer.Children.Add(frame);
+    }
+
+    private void AddHoverEffectsToHabitButtons(Button checkButton, Button deleteButton, bool isCompleted)
+    {
+        // Сохраняем оригинальные свойства для кнопки галочки
+        var checkOriginalBackground = checkButton.BackgroundColor;
+        var checkOriginalTextColor = checkButton.TextColor;
+        var checkOriginalBorderColor = checkButton.BorderColor;
+
+        // Простой подход через анимации при нажатии
+        checkButton.Pressed += (s, e) =>
+        {
+            // Анимация увеличения при нажатии
+            checkButton.ScaleTo(1.3, 50, Easing.CubicInOut);
+            checkButton.Opacity = 1.0;
+
+            if (!isCompleted)
+            {
+                checkButton.BackgroundColor = Color.FromArgb("#4CAF50");
+                checkButton.TextColor = Colors.White;
+                checkButton.BorderColor = Color.FromArgb("#4CAF50");
+            }
+            else
+            {
+                checkButton.BackgroundColor = Color.FromArgb("#9C27B0");
+                checkButton.TextColor = Colors.White;
+                checkButton.BorderColor = Color.FromArgb("#9C27B0");
+            }
+        };
+
+        checkButton.Released += (s, e) =>
+        {
+            // Анимация уменьшения при отпускании
+            checkButton.ScaleTo(1.0, 50, Easing.CubicInOut);
+            checkButton.Opacity = 0.9;
+
+            // Восстанавливаем оригинальные значения
+            checkButton.BackgroundColor = checkOriginalBackground;
+            checkButton.TextColor = checkOriginalTextColor;
+            checkButton.BorderColor = checkOriginalBorderColor;
+        };
+
+        // Сохраняем оригинальные свойства для кнопки удаления
+        var deleteOriginalBackground = deleteButton.BackgroundColor;
+        var deleteOriginalTextColor = deleteButton.TextColor;
+        var deleteOriginalBorderColor = deleteButton.BorderColor;
+
+        // Обработчики для кнопки удаления
+        deleteButton.Pressed += (s, e) =>
+        {
+            // Анимация увеличения при нажатии
+            deleteButton.ScaleTo(1.3, 50, Easing.CubicInOut);
+            deleteButton.Opacity = 1.0;
+            deleteButton.BackgroundColor = Color.FromArgb("#FF5252");
+            deleteButton.TextColor = Colors.White;
+            deleteButton.BorderColor = Color.FromArgb("#FF5252");
+        };
+
+        deleteButton.Released += (s, e) =>
+        {
+            // Анимация уменьшения при отпускании
+            deleteButton.ScaleTo(1.0, 50, Easing.CubicInOut);
+            deleteButton.Opacity = 0.9;
+
+            // Восстанавливаем оригинальные значения
+            deleteButton.BackgroundColor = deleteOriginalBackground;
+            deleteButton.TextColor = deleteOriginalTextColor;
+            deleteButton.BorderColor = deleteOriginalBorderColor;
+        };
     }
 }

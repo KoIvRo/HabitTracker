@@ -8,15 +8,6 @@
     <ScrollView>
         <StackLayout Padding="15" Spacing="15">
 
-            <!-- Header -->
-            <HorizontalStackLayout>
-                <Label Text="Habits" 
-                       FontSize="24" 
-                       FontAttributes="Bold"
-                       TextColor="#4CAF50"
-                       HorizontalOptions="StartAndExpand"/>
-            </HorizontalStackLayout>
-
             <!-- Habits list -->
             <Border Stroke="#333333"
                     StrokeThickness="1"

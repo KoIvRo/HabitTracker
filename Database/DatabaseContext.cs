@@ -468,4 +468,21 @@ public class DatabaseContext
         public int HabitId { get; set; }
         public DateTime ExclusionDate { get; set; }
     }
+
+    public async Task<Dictionary<DateTime, DailyRecord>> GetRecordsDictionaryAsync(DateTime startDate, DateTime endDate)
+    {
+        try
+        {
+            var records = await _database.Table<DailyRecord>()
+                .Where(d => d.Date >= startDate.Date && d.Date <= endDate.Date)
+                .ToListAsync();
+
+            return records.ToDictionary(r => r.Date, r => r);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error getting records dictionary: {ex.Message}");
+            return new Dictionary<DateTime, DailyRecord>();
+        }
+    }
 }

@@ -30,22 +30,15 @@
     </Shell.FlyoutFooter>
 
     <FlyoutItem Title="Today" FlyoutDisplayOptions="AsSingleItem">
-        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
+        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" Route="Today" />
     </FlyoutItem>
 
     <FlyoutItem Title="Habits" FlyoutDisplayOptions="AsSingleItem">
-        <ShellContent ContentTemplate="{DataTemplate views:BaseHabitsPage}" />
+        <ShellContent ContentTemplate="{DataTemplate views:BaseHabitsPage}" Route="Habits" />
     </FlyoutItem>
 
     <FlyoutItem Title="Calendar" FlyoutDisplayOptions="AsSingleItem">
-        <ShellContent>
-            <ContentPage>
-                <Label Text="Calendar will be added later" 
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       TextColor="White"/>
-            </ContentPage>
-        </ShellContent>
+        <ShellContent ContentTemplate="{DataTemplate views:CalendarPage}" Route="Calendar" />
     </FlyoutItem>
 
 </Shell>

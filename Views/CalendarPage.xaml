@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HabitTracker.Views.CalendarPage"
+             Title="Calendar"
+             BackgroundColor="#121212">
+
+    <ScrollView>
+        <StackLayout Padding="15" Spacing="20">
+
+            <!-- Calendar Grid -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="Last 64 Days" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <!-- Calendar grid will be generated in code -->
+                    <StackLayout x:Name="CalendarContainer"
+                                 Spacing="2"/>
+                </StackLayout>
+            </Border>
+
+            <!-- Selected day info -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15"
+                    x:Name="DayInfoBorder"
+                    IsVisible="False">
+                <StackLayout Spacing="8">
+                    <Label Text="Selected Day" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="SelectedDateLabel"
+                           Text=""
+                           FontSize="16"
+                           TextColor="#BB86FC"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="MoodLabel"
+                           Text=""
+                           FontSize="14"
+                           TextColor="#BBBBBB"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="CompletionLabel"
+                           Text=""
+                           FontSize="14"
+                           TextColor="#4CAF50"
+                           HorizontalOptions="Center"/>
+
+                    <Button x:Name="GoToDayButton"
+                            Text="Go to this day"
+                            Clicked="OnGoToDayClicked"
+                            BackgroundColor="#BB86FC"
+                            TextColor="White"
+                            FontSize="14"
+                            HeightRequest="35"
+                            CornerRadius="8"
+                            HorizontalOptions="Center"/>
+                </StackLayout>
+            </Border>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
