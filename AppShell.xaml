@@ -1,20 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:HabitTracker.Views"
        x:Class="HabitTracker.AppShell"
-       Title="HabitTracker">
+       Title="HabitTracker"
+       FlyoutBackgroundColor="#1E1E1E"
+       FlyoutBehavior="Flyout"
+       BackgroundColor="#121212">
 
-    <!-- ОБРАТИТЕ ВНИМАНИЕ: здесь НЕ указывается namespace Views -->
-    <!-- Shell автоматически ищет MainPage в корне, а он теперь в Views -->
-    <!-- Поэтому мы используем альтернативный подход -->
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="120" BackgroundColor="#121212">
+            <Label Text="HabitTracker" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   TextColor="#BB86FC"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"/>
+        </Grid>
+    </Shell.FlyoutHeader>
 
-    <ShellContent Title="Главная"
-                  Route="MainPage">
-        <ShellContent.ContentTemplate>
-            <DataTemplate>
-                <views:MainPage xmlns:views="clr-namespace:HabitTracker.Views" />
-            </DataTemplate>
-        </ShellContent.ContentTemplate>
-    </ShellContent>
+    <Shell.FlyoutFooter>
+        <Grid HeightRequest="60" BackgroundColor="#121212">
+            <Label Text="v1.0" 
+                   FontSize="12"
+                   TextColor="#888888"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"/>
+        </Grid>
+    </Shell.FlyoutFooter>
+
+    <FlyoutItem Title="Today" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" Route="Today" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Habits" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent ContentTemplate="{DataTemplate views:BaseHabitsPage}" Route="Habits" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Calendar" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent ContentTemplate="{DataTemplate views:CalendarPage}" Route="Calendar" />
+    </FlyoutItem>
 
 </Shell>

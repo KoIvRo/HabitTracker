@@ -9,13 +9,13 @@ public partial class MainViewModel : ObservableObject
     private DateTime _selectedDate = DateTime.Today;
 
     [ObservableProperty]
-    private int _mood = 5;
+    private int _mood = 4;
 
     [ObservableProperty]
-    private Color _moodColor = Color.FromArgb("#6ba1ff");
+    private Color _moodColor = Color.FromArgb("#00BFFF");
 
     [ObservableProperty]
-    private string _moodDescription = "Нормально";
+    private string _moodDescription = "Нейтрально";
 
     public MainViewModel()
     {
@@ -25,32 +25,29 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task GoToCalendar()
     {
-        // Простой переход на страницу календаря
+        // Переход на страницу календаря
         await Shell.Current.GoToAsync("CalendarPage");
     }
 
     [RelayCommand]
-    private void SetTestMood()
+    private void SetMood(int moodLevel)
     {
-        // Циклически меняем настроение
-        Mood = (Mood % 10) + 1;
+        Mood = moodLevel;
         UpdateMoodColor();
     }
 
     private void UpdateMoodColor()
     {
+        // Цвета для шкалы настроения (фиолетовый → красный)
         MoodColor = Mood switch
         {
-            1 => Color.FromArgb("#1e3c72"),
-            2 => Color.FromArgb("#2a5298"),
-            3 => Color.FromArgb("#3a6bc2"),
-            4 => Color.FromArgb("#4a85e6"),
-            5 => Color.FromArgb("#6ba1ff"),
-            6 => Color.FromArgb("#ffcc00"),
-            7 => Color.FromArgb("#ff9900"),
-            8 => Color.FromArgb("#ff6600"),
-            9 => Color.FromArgb("#ff3300"),
-            10 => Color.FromArgb("#cc0000"),
+            1 => Color.FromArgb("#8A2BE2"),  // Темно-фиолетовый
+            2 => Color.FromArgb("#9370DB"),  // Средне-фиолетовый
+            3 => Color.FromArgb("#6495ED"),  // Голубой
+            4 => Color.FromArgb("#00BFFF"),  // Ярко-голубой
+            5 => Color.FromArgb("#FFD700"),  // Золотой
+            6 => Color.FromArgb("#FF6347"),  // Оранжево-красный
+            7 => Color.FromArgb("#DC143C"),  // Ярко-красный
             _ => Colors.Gray
         };
 
@@ -58,14 +55,11 @@ public partial class MainViewModel : ObservableObject
         {
             1 => "Очень плохо",
             2 => "Плохо",
-            3 => "Не очень",
-            4 => "Средне",
-            5 => "Нормально",
-            6 => "Хорошо",
-            7 => "Очень хорошо",
-            8 => "Отлично",
-            9 => "Прекрасно",
-            10 => "Эйфория",
+            3 => "Слегка плохо",
+            4 => "Нейтрально",
+            5 => "Хорошо",
+            6 => "Очень хорошо",
+            7 => "Отлично!",
             _ => "Не выбрано"
         };
     }
@@ -80,20 +74,5 @@ public partial class MainViewModel : ObservableObject
     private void NextDay()
     {
         SelectedDate = SelectedDate.AddDays(1);
-    }
-
-    [RelayCommand]
-    private void Today()
-    {
-        SelectedDate = DateTime.Today;
-    }
-
-    [RelayCommand]
-    private async Task ShowMessage()
-    {
-        await Application.Current.MainPage.DisplayAlert(
-            "Информация",
-            $"Текущая дата: {SelectedDate:dd.MM.yyyy}\nНастроение: {MoodDescription}",
-            "OK");
     }
 }
