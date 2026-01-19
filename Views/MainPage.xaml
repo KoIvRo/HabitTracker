@@ -35,7 +35,7 @@
             <Label Text="Настроение дня" 
                    FontSize="18" 
                    FontAttributes="Bold"
-               HorizontalOptions="Center"/>
+                   HorizontalOptions="Center"/>
 
             <Label x:Name="MoodDescriptionLabel"
                    Text="Нейтрально"

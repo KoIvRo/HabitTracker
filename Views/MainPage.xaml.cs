@@ -1,17 +1,23 @@
-﻿namespace HabitTracker.Views;
+﻿using HabitTracker.Database;
+using HabitTracker.Models;
+
+namespace HabitTracker.Views;
 
 public partial class MainPage : ContentPage
 {
     private DateTime _selectedDate = DateTime.Today;
     private int _currentMood = 4;
+    private DatabaseContext _database;
+    private List<Habit> _habits = new();
+    private Dictionary<int, bool> _habitCompletionStatus = new();
 
     public MainPage()
     {
         InitializeComponent();
+        _database = new DatabaseContext();
 
         // Инициализация
-        UpdateDateDisplay();
-        UpdateMoodDisplay();
+        LoadData();
 
         // Назначение обработчиков
         PrevDayBtn.Clicked += OnPrevDayClicked;
@@ -27,9 +33,49 @@ public partial class MainPage : ContentPage
         MoodBtn5.Clicked += (s, e) => SetMood(5);
         MoodBtn6.Clicked += (s, e) => SetMood(6);
         MoodBtn7.Clicked += (s, e) => SetMood(7);
+    }
 
-        // Добавляем тестовые привычки
-        AddTestHabits();
+    private async void LoadData()
+    {
+        try
+        {
+            // Загружаем данные для выбранной даты
+            await LoadHabits();
+            await LoadMood();
+            UpdateDateDisplay();
+            UpdateMoodDisplay();
+            UpdateHabitsUI();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Ошибка", $"Не удалось загрузить данные: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task LoadHabits()
+    {
+        _habits = await _database.GetHabitsAsync();
+        _habitCompletionStatus.Clear();
+
+        // Загружаем статус выполнения для каждой привычки на выбранную дату
+        foreach (var habit in _habits)
+        {
+            var isCompleted = await _database.GetHabitCompletionStatusAsync(habit.Id, _selectedDate);
+            _habitCompletionStatus[habit.Id] = isCompleted;
+        }
+    }
+
+    private async Task LoadMood()
+    {
+        var record = await _database.GetDailyRecordAsync(_selectedDate);
+        if (record != null && record.Mood > 0)
+        {
+            _currentMood = record.Mood;
+        }
+        else
+        {
+            _currentMood = 4; // По умолчанию нейтрально
+        }
     }
 
     private void UpdateDateDisplay()
@@ -76,6 +122,16 @@ public partial class MainPage : ContentPage
             7 => "Отлично!",
             _ => "Не выбрано"
         };
+    }
+
+    private async void UpdateHabitsUI()
+    {
+        HabitsContainer.Children.Clear();
+
+        foreach (var habit in _habits)
+        {
+            AddHabitToUI(habit);
+        }
     }
 
     private void SetButtonColors()
@@ -127,22 +183,33 @@ public partial class MainPage : ContentPage
         MoodBtn7.BorderWidth = 0;
     }
 
-    private void SetMood(int mood)
+    private async void SetMood(int mood)
     {
         _currentMood = mood;
         UpdateMoodDisplay();
+
+        // Сохраняем настроение в БД
+        var record = await _database.GetDailyRecordAsync(_selectedDate) ??
+                    new DailyRecord { Date = _selectedDate };
+        record.Mood = mood;
+
+        // Обновляем статистику привычек
+        record.TotalHabits = _habits.Count;
+        record.CompletedHabits = _habitCompletionStatus.Count(kvp => kvp.Value);
+
+        await _database.SaveDailyRecordAsync(record);
     }
 
-    private void OnPrevDayClicked(object sender, EventArgs e)
+    private async void OnPrevDayClicked(object sender, EventArgs e)
     {
         _selectedDate = _selectedDate.AddDays(-1);
-        UpdateDateDisplay();
+        LoadData();
     }
 
-    private void OnNextDayClicked(object sender, EventArgs e)
+    private async void OnNextDayClicked(object sender, EventArgs e)
     {
         _selectedDate = _selectedDate.AddDays(1);
-        UpdateDateDisplay();
+        LoadData();
     }
 
     private async void OnCalendarClicked(object sender, EventArgs e)
@@ -160,18 +227,13 @@ public partial class MainPage : ContentPage
 
         if (!string.IsNullOrWhiteSpace(habitName))
         {
-            AddHabitToUI(habitName);
+            var habit = new Habit { Name = habitName };
+            await _database.AddHabitAsync(habit);
+            LoadData();
         }
     }
 
-    private void AddTestHabits()
-    {
-        AddHabitToUI("Пить воду");
-        AddHabitToUI("Спорт");
-        AddHabitToUI("Чтение");
-    }
-
-    private void AddHabitToUI(string habitName)
+    private void AddHabitToUI(Habit habit)
     {
         var habitFrame = new Frame
         {
@@ -187,9 +249,10 @@ public partial class MainPage : ContentPage
 
         var habitLabel = new Label
         {
-            Text = habitName,
+            Text = habit.Name,
             FontSize = 16,
-            VerticalOptions = LayoutOptions.Center
+            VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.StartAndExpand
         };
 
         var doneBtn = new Button
@@ -198,7 +261,9 @@ public partial class MainPage : ContentPage
             WidthRequest = 40,
             HeightRequest = 40,
             CornerRadius = 20,
-            BackgroundColor = Colors.LightGreen
+            BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && _habitCompletionStatus[habit.Id]
+                ? Colors.Green
+                : Colors.LightGreen
         };
 
         var notDoneBtn = new Button
@@ -207,7 +272,9 @@ public partial class MainPage : ContentPage
             WidthRequest = 40,
             HeightRequest = 40,
             CornerRadius = 20,
-            BackgroundColor = Colors.LightPink
+            BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && !_habitCompletionStatus[habit.Id]
+                ? Colors.Red
+                : Colors.LightPink
         };
 
         var deleteBtn = new Button
@@ -219,21 +286,32 @@ public partial class MainPage : ContentPage
             BackgroundColor = Colors.LightGray
         };
 
-        doneBtn.Clicked += (s, e) =>
+        // Обработчики
+        doneBtn.Clicked += async (s, e) =>
         {
-            doneBtn.BackgroundColor = Colors.Green;
-            notDoneBtn.BackgroundColor = Colors.LightPink;
+            await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, true);
+            LoadData(); // Перезагружаем данные
         };
 
-        notDoneBtn.Clicked += (s, e) =>
+        notDoneBtn.Clicked += async (s, e) =>
         {
-            notDoneBtn.BackgroundColor = Colors.Red;
-            doneBtn.BackgroundColor = Colors.LightGreen;
+            await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, false);
+            LoadData(); // Перезагружаем данные
         };
 
-        deleteBtn.Clicked += (s, e) =>
+        deleteBtn.Clicked += async (s, e) =>
         {
-            HabitsContainer.Children.Remove(habitFrame);
+            bool confirm = await DisplayAlert(
+                "Удаление привычки",
+                $"Вы уверены, что хотите удалить привычку \"{habit.Name}\"?",
+                "Да",
+                "Нет");
+
+            if (confirm)
+            {
+                await _database.DeleteHabitAsync(habit.Id);
+                LoadData(); // Перезагружаем данные
+            }
         };
 
         habitLayout.Children.Add(habitLabel);
