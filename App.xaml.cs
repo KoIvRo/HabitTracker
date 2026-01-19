@@ -13,6 +13,7 @@ public partial class App : Application
         {
             BarBackgroundColor = Color.FromArgb("#121212"),
             BarTextColor = Colors.White,
+            Title = "Трекер привычек"
         };
     }
 }

@@ -95,7 +95,7 @@ public partial class BaseHabitsPage : ContentPage
 
         var deleteBtn = new Button
         {
-            Text = "🗑 Удалить из будущих",
+            Text = "🗑 Удалить",
             Padding = new Thickness(10, 5),
             BackgroundColor = Color.FromArgb("#D32F2F"),
             TextColor = Colors.White,
@@ -108,8 +108,8 @@ public partial class BaseHabitsPage : ContentPage
         {
             bool confirm = await DisplayAlert(
                 "Удаление базовой привычки",
-                $"Вы уверены, что хотите удалить привычку \"{habit.Name}\" из базового списка?\n" +
-                "✓ Она не будет добавляться в будущие дни\n" +
+                $"Удалить базовую привычку \"{habit.Name}\" из будущих дней?\n\n" +
+                "✓ Не будет появляться в будущих днях\n" +
                 "✓ Останется в прошедших днях\n" +
                 "✓ Чтобы удалить из сегодняшнего дня, сделайте это на главной странице",
                 "Удалить из будущих",
@@ -119,16 +119,17 @@ public partial class BaseHabitsPage : ContentPage
             {
                 try
                 {
-                    // Помечаем привычку как не базовую и устанавливаем дату деактивации
-                    habit.IsBaseHabit = false;
-                    habit.DeactivatedDate = DateTime.Today;
-                    await _database.UpdateHabitAsync(habit);
-
-                    // Удаляем все будущие выполнения этой привычки
-                    await _database.RemoveHabitFromFutureDaysAsync(habit.Id);
-
-                    LoadBaseHabits();
-                    await DisplayAlert("Успех", $"Привычка \"{habit.Name}\" удалена из будущих дней", "OK");
+                    // Удаляем привычку из будущих дней
+                    var success = await _database.RemoveBaseHabitFromFutureAsync(habit.Id);
+                    if (success)
+                    {
+                        LoadBaseHabits();
+                        await DisplayAlert("Успех", $"Привычка \"{habit.Name}\" удалена из будущих дней", "OK");
+                    }
+                    else
+                    {
+                        await DisplayAlert("Ошибка", "Не удалось удалить привычку", "OK");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -175,10 +176,5 @@ public partial class BaseHabitsPage : ContentPage
             LoadBaseHabits();
             await DisplayAlert("Успех", "Базовая привычка добавлена", "OK");
         }
-    }
-
-    private async void OnBackClicked(object sender, EventArgs e)
-    {
-        await Navigation.PopAsync();
     }
 }
