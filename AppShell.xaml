@@ -4,16 +4,48 @@
        xmlns:views="clr-namespace:HabitTracker.Views"
        x:Class="HabitTracker.AppShell"
        Title="HabitTracker"
-       BackgroundColor="#121212"
        FlyoutBackgroundColor="#1E1E1E"
-       TitleColor="#BB86FC">
+       FlyoutBehavior="Flyout"
+       BackgroundColor="#121212">
 
-    <!-- Страницы -->
-    <ShellContent Title="Главная"
-                  Icon="home.png"
-                  ContentTemplate="{DataTemplate views:MainPage}" />
+    <Shell.FlyoutHeader>
+        <Grid HeightRequest="120" BackgroundColor="#121212">
+            <Label Text="HabitTracker" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   TextColor="#BB86FC"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"/>
+        </Grid>
+    </Shell.FlyoutHeader>
 
-    <ShellContent Title="Базовые привычки"
-                  Icon="list.png"
-                  ContentTemplate="{DataTemplate views:BaseHabitsPage}" />
+    <Shell.FlyoutFooter>
+        <Grid HeightRequest="60" BackgroundColor="#121212">
+            <Label Text="v1.0" 
+                   FontSize="12"
+                   TextColor="#888888"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"/>
+        </Grid>
+    </Shell.FlyoutFooter>
+
+    <FlyoutItem Title="Today" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Habits" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent ContentTemplate="{DataTemplate views:BaseHabitsPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Calendar" FlyoutDisplayOptions="AsSingleItem">
+        <ShellContent>
+            <ContentPage>
+                <Label Text="Calendar will be added later" 
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="White"/>
+            </ContentPage>
+        </ShellContent>
+    </FlyoutItem>
+
 </Shell>

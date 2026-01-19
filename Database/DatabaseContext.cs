@@ -7,7 +7,8 @@ namespace HabitTracker.Database;
 public class DatabaseContext
 {
     private readonly SQLiteAsyncConnection _database;
-    private bool _isInitialized = false;
+    private static bool _isInitialized = false;
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
     public DatabaseContext()
     {
@@ -21,8 +22,19 @@ public class DatabaseContext
             // Инициализируем БД только один раз
             if (!_isInitialized)
             {
-                InitializeDatabase();
-                _isInitialized = true;
+                _semaphore.Wait();
+                try
+                {
+                    if (!_isInitialized)
+                    {
+                        InitializeDatabase();
+                        _isInitialized = true;
+                    }
+                }
+                finally
+                {
+                    _semaphore.Release();
+                }
             }
         }
         catch (Exception ex)
@@ -67,7 +79,6 @@ public class DatabaseContext
     }
 
     // Получить привычки для конкретной даты
-    // Получить привычки для конкретной даты
     public async Task<List<Habit>> GetHabitsForDateAsync(DateTime date)
     {
         try
@@ -75,8 +86,15 @@ public class DatabaseContext
             var allHabits = await GetHabitsAsync();
             var habitsForDate = new List<Habit>();
 
+            // Получаем ID привычек, которые исключены на эту дату
+            var excludedHabitIds = await GetExcludedHabitIdsForDate(date);
+
             foreach (var habit in allHabits)
             {
+                // Пропускаем исключенные привычки
+                if (excludedHabitIds.Contains(habit.Id))
+                    continue;
+
                 // Если привычка создана до или в выбранную дату
                 if (habit.CreatedDate.Date <= date.Date)
                 {
@@ -189,10 +207,13 @@ public class DatabaseContext
     }
 
     // Удалить привычку только из текущего дня (не из базы)
-    public async Task<int> RemoveHabitFromDayAsync(int habitId, DateTime date)
+    public async Task<bool> RemoveHabitFromDayAsync(int habitId, DateTime date)
     {
         try
         {
+            // Добавляем исключение для этой привычки на эту дату
+            await AddHabitExclusionAsync(habitId, date);
+
             // Удаляем все выполнения привычки на эту дату
             await _database.ExecuteAsync(
                 "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date = ?",
@@ -201,29 +222,91 @@ public class DatabaseContext
             // Обновляем статистику дня
             await UpdateDailyStatsAsync(date);
 
-            return 1;
+            return true;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error removing habit from day: {ex.Message}");
-            return 0;
+            return false;
         }
     }
 
-    // Удалить привычку из всех будущих дней
-    public async Task<int> RemoveHabitFromFutureDaysAsync(int habitId)
+    // Удалить базовую привычку из базового списка (для будущих дней)
+    public async Task<bool> RemoveBaseHabitFromFutureAsync(int habitId)
     {
         try
         {
-            // Удаляем все выполнения привычки на будущие даты
-            return await _database.ExecuteAsync(
+            var habit = await _database.Table<Habit>()
+                .FirstOrDefaultAsync(h => h.Id == habitId && h.IsActive && h.IsBaseHabit);
+
+            if (habit == null)
+                return false;
+
+            // Помечаем привычку как не базовую и устанавливаем дату деактивации
+            habit.IsBaseHabit = false;
+            habit.DeactivatedDate = DateTime.Today;
+            await _database.UpdateAsync(habit);
+
+            // Удаляем все будущие выполнения этой привычки
+            await _database.ExecuteAsync(
                 "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date > ?",
                 habitId, DateTime.Today);
+
+            // Удаляем все исключения для будущих дат
+            await _database.ExecuteAsync(
+                "DELETE FROM HabitExclusion WHERE HabitId = ? AND ExclusionDate > ?",
+                habitId, DateTime.Today);
+
+            return true;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error removing habit from future days: {ex.Message}");
-            return 0;
+            Debug.WriteLine($"Error removing base habit from future: {ex.Message}");
+            return false;
+        }
+    }
+
+    // Методы для исключений привычек (чтобы базовые привычки не показывались в определенные дни)
+
+    private async Task AddHabitExclusionAsync(int habitId, DateTime date)
+    {
+        try
+        {
+            // Создаем таблицу для исключений если её нет
+            await _database.ExecuteAsync(@"
+                CREATE TABLE IF NOT EXISTS HabitExclusion (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    HabitId INTEGER NOT NULL,
+                    ExclusionDate DATE NOT NULL,
+                    UNIQUE(HabitId, ExclusionDate)
+                )");
+
+            // Добавляем исключение
+            await _database.ExecuteAsync(
+                "INSERT OR IGNORE INTO HabitExclusion (HabitId, ExclusionDate) VALUES (?, ?)",
+                habitId, date.Date);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error adding habit exclusion: {ex.Message}");
+        }
+    }
+
+    private async Task<HashSet<int>> GetExcludedHabitIdsForDate(DateTime date)
+    {
+        try
+        {
+            var exclusions = await _database.QueryAsync<HabitExclusion>(
+                "SELECT * FROM HabitExclusion WHERE ExclusionDate = ?",
+                date.Date);
+
+            return new HashSet<int>(exclusions.Select(e => e.HabitId));
+        }
+        catch (Exception ex)
+        {
+            // Если таблицы нет, возвращаем пустой список
+            Debug.WriteLine($"Error getting excluded habits: {ex.Message}");
+            return new HashSet<int>();
         }
     }
 
@@ -356,36 +439,8 @@ public class DatabaseContext
             return false;
         }
     }
-    // В класс DatabaseContext добавьте метод:
-    public async Task<bool> RemoveBaseHabitFromTodayAsync(int habitId)
-    {
-        try
-        {
-            // Проверяем, что привычка существует и является базовой
-            var habit = await _database.Table<Habit>()
-                .FirstOrDefaultAsync(h => h.Id == habitId && h.IsActive && h.IsBaseHabit);
 
-            if (habit == null)
-                return false;
-
-            // Удаляем выполнение привычки на сегодня
-            await _database.ExecuteAsync(
-                "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date = ?",
-                habitId, DateTime.Today);
-
-            // Обновляем статистику сегодняшнего дня
-            await UpdateDailyStatsAsync(DateTime.Today);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error removing base habit from today: {ex.Message}");
-            return false;
-        }
-    }
-
-    // Метод для проверки существования привычки по имени сегодня
+    // Метод для проверки существования привычки по имени сегодня (только небазовые)
     public async Task<bool> HabitExistsForTodayAsync(string habitName)
     {
         try
@@ -394,8 +449,9 @@ public class DatabaseContext
                 .FirstOrDefaultAsync(h =>
                     h.Name.ToLower() == habitName.ToLower() &&
                     h.IsActive &&
-                    !h.IsBaseHabit && // Только небазовые
-                    h.CreatedDate.Date == DateTime.Today); // Созданные сегодня
+                    !h.IsBaseHabit &&
+                    h.CreatedDate.Date == DateTime.Today.Date);
+
             return existing != null;
         }
         catch (Exception ex)
@@ -403,5 +459,13 @@ public class DatabaseContext
             Debug.WriteLine($"Error checking if habit exists for today: {ex.Message}");
             return false;
         }
+    }
+
+    // Модель для исключений
+    private class HabitExclusion
+    {
+        public int Id { get; set; }
+        public int HabitId { get; set; }
+        public DateTime ExclusionDate { get; set; }
     }
 }

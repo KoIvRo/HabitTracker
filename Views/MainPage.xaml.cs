@@ -1,6 +1,5 @@
 ﻿using HabitTracker.Database;
 using HabitTracker.Models;
-using Microsoft.Maui.Controls.Shapes;
 using System.Diagnostics;
 
 namespace HabitTracker.Views;
@@ -20,17 +19,15 @@ public partial class MainPage : ContentPage
             InitializeComponent();
             _database = new DatabaseContext();
 
-            // Инициализация
+            // Initialization
             LoadData();
 
-            // Назначение обработчиков
+            // Assign handlers
             PrevDayBtn.Clicked += OnPrevDayClicked;
             NextDayBtn.Clicked += OnNextDayClicked;
-            CalendarBtn.Clicked += OnCalendarClicked;
             AddHabitBtn.Clicked += OnAddHabitClicked;
-            BaseHabitsBtn2.Clicked += OnBaseHabitsClicked;
 
-            // Обработчики для кнопок настроения
+            // Mood button handlers
             MoodBtn1.Clicked += (s, e) => SetMood(1);
             MoodBtn2.Clicked += (s, e) => SetMood(2);
             MoodBtn3.Clicked += (s, e) => SetMood(3);
@@ -41,36 +38,40 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка инициализации: {ex.Message}");
+            Debug.WriteLine($"Initialization error: {ex.Message}");
         }
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        LoadData();
     }
 
     private async void LoadData()
     {
         try
         {
-            // Загружаем данные для выбранной даты
+            // Load data for selected date
             await LoadHabits();
             await LoadMood();
             UpdateDateDisplay();
-            UpdateDayInfo();
             UpdateMoodDisplay();
             UpdateHabitsUI();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка загрузки данных: {ex.Message}");
-            await DisplayAlert("Ошибка", $"Не удалось загрузить данные: {ex.Message}", "OK");
+            Debug.WriteLine($"Data loading error: {ex.Message}");
         }
     }
 
     private async Task LoadHabits()
     {
-        // Загружаем привычки для конкретной даты
+        // Load habits for specific date
         _habits = await _database.GetHabitsForDateAsync(_selectedDate);
         _habitCompletionStatus.Clear();
 
-        // Загружаем статус выполнения для каждой привычки на выбранную дату
+        // Load completion status for each habit on selected date
         foreach (var habit in _habits)
         {
             var isCompleted = await _database.GetHabitCompletionStatusAsync(habit.Id, _selectedDate);
@@ -87,7 +88,7 @@ public partial class MainPage : ContentPage
         }
         else
         {
-            _currentMood = 4; // По умолчанию нейтрально
+            _currentMood = 4; // Default neutral
         }
     }
 
@@ -96,34 +97,15 @@ public partial class MainPage : ContentPage
         DateLabel.Text = _selectedDate.ToString("dd.MM.yyyy");
     }
 
-    private void UpdateDayInfo()
-    {
-        if (_selectedDate.Date == DateTime.Today.Date)
-        {
-            DayInfoLabel.Text = "Вы просматриваете сегодняшний день. Вы можете отмечать выполнение привычек.";
-            DayInfoLabel.TextColor = Color.FromArgb("#4CAF50");
-        }
-        else if (_selectedDate.Date < DateTime.Today.Date)
-        {
-            DayInfoLabel.Text = "Вы просматриваете прошедший день. Вы не можете изменять привычки.";
-            DayInfoLabel.TextColor = Color.FromArgb("#FF9800");
-        }
-        else
-        {
-            DayInfoLabel.Text = "Вы просматриваете будущий день. Вы не можете изменять привычки.";
-            DayInfoLabel.TextColor = Color.FromArgb("#2196F3");
-        }
-    }
-
     private void UpdateMoodDisplay()
     {
-        // Устанавливаем цвета для всех кнопок
+        // Set colors for all buttons
         SetButtonColors();
 
-        // Сбрасываем обводку у всех кнопок
+        // Reset all button borders
         ResetButtonBorders();
 
-        // Обводим выбранную кнопку фиолетовым цветом на темном фоне
+        // Highlight selected button with purple color
         Button selectedButton = _currentMood switch
         {
             1 => MoodBtn1,
@@ -138,27 +120,41 @@ public partial class MainPage : ContentPage
 
         if (selectedButton != null)
         {
-            selectedButton.BorderColor = Color.FromArgb("#BB86FC");  // Фиолетовая обводка
+            selectedButton.BorderColor = Color.FromArgb("#BB86FC");  // Purple border
             selectedButton.BorderWidth = 3;
         }
 
-        // Обновляем описание
+        // Update description
         MoodDescriptionLabel.Text = _currentMood switch
         {
-            1 => "Очень плохо",
-            2 => "Плохо",
-            3 => "Слегка плохо",
-            4 => "Нейтрально",
-            5 => "Хорошо",
-            6 => "Очень хорошо",
-            7 => "Отлично!",
-            _ => "Не выбрано"
+            1 => "Very bad",
+            2 => "Bad",
+            3 => "Somewhat bad",
+            4 => "Neutral",
+            5 => "Good",
+            6 => "Very good",
+            7 => "Excellent!",
+            _ => "Not selected"
         };
     }
 
     private async void UpdateHabitsUI()
     {
         HabitsContainer.Children.Clear();
+
+        if (_habits.Count == 0)
+        {
+            var emptyLabel = new Label
+            {
+                Text = "No notes for this day",
+                FontSize = 16,
+                TextColor = Color.FromArgb("#888888"),
+                HorizontalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0, 20)
+            };
+            HabitsContainer.Children.Add(emptyLabel);
+            return;
+        }
 
         foreach (var habit in _habits)
         {
@@ -168,26 +164,26 @@ public partial class MainPage : ContentPage
 
     private void SetButtonColors()
     {
-        // Устанавливаем цвета для каждой кнопки (яркие на темном фоне)
-        MoodBtn1.BackgroundColor = Color.FromArgb("#8A2BE2");  // Фиолетовый
+        // Set colors for each button (bright on dark background)
+        MoodBtn1.BackgroundColor = Color.FromArgb("#8A2BE2");  // Purple
         MoodBtn1.TextColor = Colors.White;
 
-        MoodBtn2.BackgroundColor = Color.FromArgb("#1E90FF");  // Синий
+        MoodBtn2.BackgroundColor = Color.FromArgb("#1E90FF");  // Blue
         MoodBtn2.TextColor = Colors.White;
 
-        MoodBtn3.BackgroundColor = Color.FromArgb("#00BFFF");  // Голубой
+        MoodBtn3.BackgroundColor = Color.FromArgb("#00BFFF");  // Light blue
         MoodBtn3.TextColor = Colors.White;
 
-        MoodBtn4.BackgroundColor = Color.FromArgb("#A9A9A9");  // Серый
+        MoodBtn4.BackgroundColor = Color.FromArgb("#A9A9A9");  // Gray
         MoodBtn4.TextColor = Colors.White;
 
-        MoodBtn5.BackgroundColor = Color.FromArgb("#FFD700");  // Желтый
+        MoodBtn5.BackgroundColor = Color.FromArgb("#FFD700");  // Yellow
         MoodBtn5.TextColor = Colors.Black;
 
-        MoodBtn6.BackgroundColor = Color.FromArgb("#FF8C00");  // Оранжевый
+        MoodBtn6.BackgroundColor = Color.FromArgb("#FF8C00");  // Orange
         MoodBtn6.TextColor = Colors.White;
 
-        MoodBtn7.BackgroundColor = Color.FromArgb("#DC143C");  // Красный
+        MoodBtn7.BackgroundColor = Color.FromArgb("#DC143C");  // Red
         MoodBtn7.TextColor = Colors.White;
     }
 
@@ -217,22 +213,22 @@ public partial class MainPage : ContentPage
 
     private async void SetMood(int mood)
     {
-        // Проверяем, можно ли изменять настроение для этой даты
+        // Check if mood can be changed for this date
         if (_selectedDate.Date != DateTime.Today.Date)
         {
-            await DisplayAlert("Информация", "Вы можете изменять настроение только для сегодняшнего дня.", "OK");
+            await DisplayAlert("Info", "You can change mood only for today.", "OK");
             return;
         }
 
         _currentMood = mood;
         UpdateMoodDisplay();
 
-        // Сохраняем настроение в БД
+        // Save mood to database
         var record = await _database.GetDailyRecordAsync(_selectedDate) ??
                     new DailyRecord { Date = _selectedDate };
         record.Mood = mood;
 
-        // Обновляем статистику привычек
+        // Update habit statistics
         record.TotalHabits = _habits.Count;
         record.CompletedHabits = _habitCompletionStatus.Count(kvp => kvp.Value);
 
@@ -251,62 +247,53 @@ public partial class MainPage : ContentPage
         LoadData();
     }
 
-    private async void OnCalendarClicked(object sender, EventArgs e)
-    {
-        await DisplayAlert("Информация", "Календарь будет добавлен позже", "OK");
-    }
-
-    private async void OnBaseHabitsClicked(object sender, EventArgs e)
-    {
-        await Navigation.PushAsync(new BaseHabitsPage());
-    }
-
     private async void OnAddHabitClicked(object sender, EventArgs e)
     {
-        // Проверяем, можно ли добавлять привычки для этой даты
+        // Check if habits can be added for this date
         if (_selectedDate.Date != DateTime.Today.Date)
         {
-            await DisplayAlert("Информация", "Вы можете добавлять привычки только для сегодняшнего дня.", "OK");
+            await DisplayAlert("Info", "You can add notes only for today.", "OK");
             return;
         }
 
         string habitName = await DisplayPromptAsync(
-            "Новая привычка на сегодня",
-            "Введите название привычки (будет добавлена только в этот день):",
-            "Добавить",
-            "Отмена");
+            "New note for today",
+            "Enter note name (will be added only for today):",
+            "Add",
+            "Cancel");
 
         if (!string.IsNullOrWhiteSpace(habitName))
         {
-            // Проверяем, не существует ли уже такая привычка сегодня
+            // Check if note already exists today
             var exists = await _database.HabitExistsForTodayAsync(habitName);
             if (exists)
             {
-                await DisplayAlert("Внимание", "Привычка с таким названием уже существует сегодня.", "OK");
+                await DisplayAlert("Warning", "Note with this name already exists today.", "OK");
                 return;
             }
 
-            // Создаем привычку только для текущего дня (не базовую)
+            // Create note only for today (not basic)
             var habit = new Habit
             {
                 Name = habitName.Trim(),
-                IsBaseHabit = false, // ВАЖНО: false - только для сегодняшнего дня!
-                CreatedDate = DateTime.Today // ВАЖНО: сегодняшняя дата
+                IsBaseHabit = false,
+                CreatedDate = DateTime.Today
             };
             await _database.AddHabitAsync(habit);
             LoadData();
+            await DisplayAlert("Success", "Note added", "OK");
         }
     }
 
     private void AddHabitToUI(Habit habit)
     {
-        var habitBorder = new Border
+        var frame = new Frame
         {
             Padding = 12,
             BackgroundColor = Color.FromArgb("#2D2D2D"),
-            Stroke = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC"),
-            StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) }
+            BorderColor = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC"),
+            CornerRadius = 8,
+            HasShadow = false
         };
 
         var habitLayout = new HorizontalStackLayout
@@ -330,7 +317,7 @@ public partial class MainPage : ContentPage
 
         var typeLabel = new Label
         {
-            Text = habit.IsBaseHabit ? "(Базовая)" : "(Только сегодня)",
+            Text = habit.IsBaseHabit ? "(Habit)" : "(Today only)",
             FontSize = 12,
             TextColor = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC")
         };
@@ -372,7 +359,7 @@ public partial class MainPage : ContentPage
             TextColor = Colors.White
         };
 
-        // Активируем кнопки только для сегодняшнего дня
+        // Activate buttons only for today
         bool canModify = _selectedDate.Date == DateTime.Today.Date;
         doneBtn.IsEnabled = canModify;
         notDoneBtn.IsEnabled = canModify;
@@ -385,7 +372,7 @@ public partial class MainPage : ContentPage
             deleteBtn.BackgroundColor = Color.FromArgb("#555555");
         }
 
-        // Обработчики
+        // Handlers
         doneBtn.Clicked += async (s, e) =>
         {
             if (!canModify) return;
@@ -400,48 +387,49 @@ public partial class MainPage : ContentPage
             LoadData();
         };
 
-        // В методе AddHabitToUI в MainPage.xaml.cs:
         deleteBtn.Clicked += async (s, e) =>
         {
             if (!canModify) return;
 
             if (habit.IsBaseHabit)
             {
-                // Для базовой привычки предлагаем удалить только из текущего дня
+                // For basic habit - remove only from today
                 bool confirm = await DisplayAlert(
-                    "Удаление базовой привычки",
-                    $"Вы уверены, что хотите удалить базовую привычку \"{habit.Name}\" только из сегодняшнего дня?\n" +
-                    "✓ Она останется в базовом списке\n" +
-                    "✓ Будет появляться в будущих днях\n" +
-                    "✓ Останется в прошедших днях\n" +
-                    "✓ Удалится только из сегодняшнего дня",
-                    "Удалить только сегодня",
-                    "Отмена");
+                    "Remove basic habit",
+                    $"Remove basic habit \"{habit.Name}\" only from today?\n\n" +
+                    "✓ Will remain a basic habit\n" +
+                    "✓ Will appear in future days\n" +
+                    "✓ Will remain in past days\n" +
+                    "✓ Will be removed only from today",
+                    "Remove from today",
+                    "Cancel");
 
                 if (confirm)
                 {
                     try
                     {
-                        // Удаляем привычку из сегодняшнего дня
-                        await _database.RemoveHabitFromDayAsync(habit.Id, _selectedDate);
-                        LoadData();
-                        await DisplayAlert("Успех", $"Привычка \"{habit.Name}\" удалена из сегодняшнего дня", "OK");
+                        // Remove habit from today
+                        var success = await _database.RemoveHabitFromDayAsync(habit.Id, _selectedDate);
+                        if (success)
+                        {
+                            LoadData();
+                        }
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlert("Ошибка", $"Не удалось удалить привычку: {ex.Message}", "OK");
+                        await DisplayAlert("Error", $"Failed to remove note: {ex.Message}", "OK");
                     }
                 }
             }
             else
             {
-                // Для обычной привычки удаляем полностью
+                // For regular note - delete completely
                 bool confirm = await DisplayAlert(
-                    "Удаление привычки",
-                    $"Вы уверены, что хотите удалить привычку \"{habit.Name}\"?\n" +
-                    "Эта привычка удалится полностью из всех дней.",
-                    "Да, удалить",
-                    "Отмена");
+                    "Delete note",
+                    $"Delete note \"{habit.Name}\" completely?\n\n" +
+                    "This note will be deleted from all days.",
+                    "Delete",
+                    "Cancel");
 
                 if (confirm)
                 {
@@ -449,11 +437,10 @@ public partial class MainPage : ContentPage
                     {
                         await _database.DeleteHabitAsync(habit.Id);
                         LoadData();
-                        await DisplayAlert("Успех", "Привычка удалена", "OK");
                     }
                     catch (Exception ex)
                     {
-                        await DisplayAlert("Ошибка", $"Не удалось удалить привычку: {ex.Message}", "OK");
+                        await DisplayAlert("Error", $"Failed to delete note: {ex.Message}", "OK");
                     }
                 }
             }
@@ -464,7 +451,7 @@ public partial class MainPage : ContentPage
         habitLayout.Children.Add(notDoneBtn);
         habitLayout.Children.Add(deleteBtn);
 
-        habitBorder.Content = habitLayout;
-        HabitsContainer.Children.Add(habitBorder);
+        frame.Content = habitLayout;
+        HabitsContainer.Children.Add(frame);
     }
 }
