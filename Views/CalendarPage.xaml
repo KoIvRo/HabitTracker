@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HabitTracker.Views.CalendarPage"
+             Title="Calendar"
+             BackgroundColor="#121212">
+
+    <ScrollView>
+        <StackLayout Padding="15" Spacing="20">
+
+            <!-- Header -->
+            <HorizontalStackLayout>
+                <Label Text="Calendar" 
+                       FontSize="24" 
+                       FontAttributes="Bold"
+                       TextColor="#BB86FC"
+                       HorizontalOptions="StartAndExpand"/>
+            </HorizontalStackLayout>
+
+            <!-- Legend -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="Legend" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto, Auto" 
+                          ColumnSpacing="10" RowSpacing="10">
+
+                        <!-- Mood colors -->
+                        <BoxView Grid.Row="0" Grid.Column="0"
+                                 WidthRequest="20"
+                                 HeightRequest="20"
+                                 CornerRadius="4"
+                                 Color="#8A2BE2"/>
+                        <Label Grid.Row="0" Grid.Column="1"
+                               Text="Mood 1 (Very bad)"
+                               FontSize="14"
+                               TextColor="#BBBBBB"
+                               VerticalOptions="Center"/>
+
+                        <BoxView Grid.Row="1" Grid.Column="0"
+                                 WidthRequest="20"
+                                 HeightRequest="20"
+                                 CornerRadius="4"
+                                 Color="#A9A9A9"/>
+                        <Label Grid.Row="1" Grid.Column="1"
+                               Text="Mood 4 (Neutral)"
+                               FontSize="14"
+                               TextColor="#BBBBBB"
+                               VerticalOptions="Center"/>
+
+                        <BoxView Grid.Row="2" Grid.Column="0"
+                                 WidthRequest="20"
+                                 HeightRequest="20"
+                                 CornerRadius="4"
+                                 Color="#DC143C"/>
+                        <Label Grid.Row="2" Grid.Column="1"
+                               Text="Mood 7 (Excellent)"
+                               FontSize="14"
+                               TextColor="#BBBBBB"
+                               VerticalOptions="Center"/>
+
+                    </Grid>
+
+                    <!-- Completion colors -->
+                    <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" 
+                          ColumnSpacing="10" RowSpacing="10" Margin="0,10,0,0">
+
+                        <Frame Grid.Row="0" Grid.Column="0"
+                               WidthRequest="20"
+                               HeightRequest="20"
+                               CornerRadius="4"
+                               BackgroundColor="#121212"
+                               BorderColor="#8A2BE2"
+                               HasShadow="false"
+                               Padding="0"/>
+
+                        <Label Grid.Row="0" Grid.Column="1"
+                               Text="Border: Mood color"
+                               FontSize="14"
+                               TextColor="#BBBBBB"
+                               VerticalOptions="Center"/>
+
+                        <BoxView Grid.Row="1" Grid.Column="0"
+                                 WidthRequest="20"
+                                 HeightRequest="20"
+                                 CornerRadius="4"
+                                 Color="#4CAF50"/>
+                        <Label Grid.Row="1" Grid.Column="1"
+                               Text="Fill: Completion % (darker = lower)"
+                               FontSize="14"
+                               TextColor="#BBBBBB"
+                               VerticalOptions="Center"/>
+
+                    </Grid>
+                </StackLayout>
+            </Border>
+
+            <!-- Calendar Grid -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15">
+                <StackLayout Spacing="10">
+                    <Label Text="Last 64 Days" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <!-- Calendar grid will be generated in code -->
+                    <StackLayout x:Name="CalendarContainer"
+                                 Spacing="2"/>
+                </StackLayout>
+            </Border>
+
+            <!-- Selected day info -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15"
+                    x:Name="DayInfoBorder"
+                    IsVisible="False">
+                <StackLayout Spacing="8">
+                    <Label Text="Selected Day" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="SelectedDateLabel"
+                           Text=""
+                           FontSize="16"
+                           TextColor="#BB86FC"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="MoodLabel"
+                           Text=""
+                           FontSize="14"
+                           TextColor="#BBBBBB"
+                           HorizontalOptions="Center"/>
+
+                    <Label x:Name="CompletionLabel"
+                           Text=""
+                           FontSize="14"
+                           TextColor="#4CAF50"
+                           HorizontalOptions="Center"/>
+
+                    <Button x:Name="GoToDayButton"
+                            Text="Go to this day"
+                            Clicked="OnGoToDayClicked"
+                            BackgroundColor="#BB86FC"
+                            TextColor="White"
+                            FontSize="14"
+                            HeightRequest="35"
+                            CornerRadius="8"
+                            HorizontalOptions="Center"/>
+                </StackLayout>
+            </Border>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

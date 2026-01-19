@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace HabitTracker.Views;
 
+[QueryProperty(nameof(SelectedDateString), "date")]
 public partial class MainPage : ContentPage
 {
     private DateTime _selectedDate = DateTime.Today;
@@ -11,6 +12,22 @@ public partial class MainPage : ContentPage
     private DatabaseContext _database;
     private List<Habit> _habits = new();
     private Dictionary<int, bool> _habitCompletionStatus = new();
+
+    public string SelectedDateString
+    {
+        set
+        {
+            if (!string.IsNullOrEmpty(value) && DateTime.TryParse(value, out var date))
+            {
+                _selectedDate = date.Date;
+                // Обновляем данные сразу, если страница уже загружена
+                if (_database != null)
+                {
+                    LoadData();
+                }
+            }
+        }
+    }
 
     public MainPage()
     {
@@ -45,6 +62,9 @@ public partial class MainPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        // Если пришли из календаря с датой, она уже установлена через QueryProperty
+        // Просто загружаем данные
         LoadData();
     }
 
