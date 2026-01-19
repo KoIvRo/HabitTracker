@@ -1,5 +1,4 @@
-﻿// Database/DatabaseContext.cs
-using SQLite;
+﻿using SQLite;
 using HabitTracker.Models;
 using System.Diagnostics;
 
@@ -8,6 +7,7 @@ namespace HabitTracker.Database;
 public class DatabaseContext
 {
     private readonly SQLiteAsyncConnection _database;
+    private bool _isInitialized = false;
 
     public DatabaseContext()
     {
@@ -17,7 +17,13 @@ public class DatabaseContext
             Debug.WriteLine($"Database path: {dbPath}");
 
             _database = new SQLiteAsyncConnection(dbPath);
-            InitializeDatabase();
+
+            // Инициализируем БД только один раз
+            if (!_isInitialized)
+            {
+                InitializeDatabase();
+                _isInitialized = true;
+            }
         }
         catch (Exception ex)
         {
@@ -30,10 +36,12 @@ public class DatabaseContext
     {
         try
         {
+            // НЕ УДАЛЯЕМ СТАРЫЕ ТАБЛИЦЫ! Только создаем если их нет
             await _database.CreateTableAsync<Habit>();
             await _database.CreateTableAsync<DailyRecord>();
             await _database.CreateTableAsync<HabitCompletion>();
-            Debug.WriteLine("Database tables created successfully");
+
+            Debug.WriteLine("Database tables created/checked");
         }
         catch (Exception ex)
         {
@@ -48,11 +56,73 @@ public class DatabaseContext
         {
             return await _database.Table<Habit>()
                 .Where(h => h.IsActive)
+                .OrderBy(h => h.Name)
                 .ToListAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error getting habits: {ex.Message}");
+            return new List<Habit>();
+        }
+    }
+
+    // Получить привычки для конкретной даты
+    // Получить привычки для конкретной даты
+    public async Task<List<Habit>> GetHabitsForDateAsync(DateTime date)
+    {
+        try
+        {
+            var allHabits = await GetHabitsAsync();
+            var habitsForDate = new List<Habit>();
+
+            foreach (var habit in allHabits)
+            {
+                // Если привычка создана до или в выбранную дату
+                if (habit.CreatedDate.Date <= date.Date)
+                {
+                    // Если это базовая привычка
+                    if (habit.IsBaseHabit)
+                    {
+                        // Проверяем, не была ли она деактивирована до этой даты
+                        if (!habit.DeactivatedDate.HasValue ||
+                            habit.DeactivatedDate.Value.Date > date.Date)
+                        {
+                            habitsForDate.Add(habit);
+                        }
+                    }
+                    else // Если это НЕ базовая привычка (привычка для конкретного дня)
+                    {
+                        // Для небазовых привычек добавляем ТОЛЬКО если они созданы в этот же день
+                        if (habit.CreatedDate.Date == date.Date)
+                        {
+                            habitsForDate.Add(habit);
+                        }
+                    }
+                }
+            }
+
+            return habitsForDate.OrderBy(h => h.Name).ToList();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error getting habits for date: {ex.Message}");
+            return new List<Habit>();
+        }
+    }
+
+    // Получить только базовые привычки
+    public async Task<List<Habit>> GetBaseHabitsAsync()
+    {
+        try
+        {
+            return await _database.Table<Habit>()
+                .Where(h => h.IsActive && h.IsBaseHabit)
+                .OrderBy(h => h.Name)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error getting base habits: {ex.Message}");
             return new List<Habit>();
         }
     }
@@ -70,6 +140,19 @@ public class DatabaseContext
         }
     }
 
+    public async Task<int> UpdateHabitAsync(Habit habit)
+    {
+        try
+        {
+            return await _database.UpdateAsync(habit);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error updating habit: {ex.Message}");
+            return 0;
+        }
+    }
+
     public async Task<int> DeleteHabitAsync(int id)
     {
         try
@@ -78,14 +161,68 @@ public class DatabaseContext
                 .FirstOrDefaultAsync(h => h.Id == id);
             if (habit != null)
             {
-                habit.IsActive = false;
-                return await _database.UpdateAsync(habit);
+                // Полное удаление (только для небазовых привычек)
+                if (!habit.IsBaseHabit)
+                {
+                    // Сначала удаляем все выполнения
+                    await _database.ExecuteAsync(
+                        "DELETE FROM HabitCompletion WHERE HabitId = ?",
+                        habit.Id);
+
+                    // Затем удаляем привычку
+                    return await _database.DeleteAsync(habit);
+                }
+                else
+                {
+                    // Для базовых привычек только деактивируем
+                    habit.IsActive = false;
+                    return await _database.UpdateAsync(habit);
+                }
             }
             return 0;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error deleting habit: {ex.Message}");
+            return 0;
+        }
+    }
+
+    // Удалить привычку только из текущего дня (не из базы)
+    public async Task<int> RemoveHabitFromDayAsync(int habitId, DateTime date)
+    {
+        try
+        {
+            // Удаляем все выполнения привычки на эту дату
+            await _database.ExecuteAsync(
+                "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date = ?",
+                habitId, date.Date);
+
+            // Обновляем статистику дня
+            await UpdateDailyStatsAsync(date);
+
+            return 1;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error removing habit from day: {ex.Message}");
+            return 0;
+        }
+    }
+
+    // Удалить привычку из всех будущих дней
+    public async Task<int> RemoveHabitFromFutureDaysAsync(int habitId)
+    {
+        try
+        {
+            // Удаляем все выполнения привычки на будущие даты
+            return await _database.ExecuteAsync(
+                "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date > ?",
+                habitId, DateTime.Today);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error removing habit from future days: {ex.Message}");
             return 0;
         }
     }
@@ -114,7 +251,7 @@ public class DatabaseContext
             var existing = await GetDailyRecordAsync(record.Date);
             if (existing != null)
             {
-                record.Date = existing.Date;
+                record.Id = existing.Id;
                 return await _database.UpdateAsync(record);
             }
             return await _database.InsertAsync(record);
@@ -179,7 +316,7 @@ public class DatabaseContext
     {
         try
         {
-            var habits = await GetHabitsAsync();
+            var habits = await GetHabitsForDateAsync(date);
             var totalHabits = habits.Count;
             var completedCount = 0;
 
@@ -203,39 +340,68 @@ public class DatabaseContext
         }
     }
 
-    // Методы для календаря
-    public async Task<List<DailyRecord>> GetMonthlyRecordsAsync(int year, int month)
+    // Метод для проверки существования привычки по имени
+    public async Task<bool> HabitExistsAsync(string habitName)
     {
         try
         {
-            var startDate = new DateTime(year, month, 1);
-            var endDate = startDate.AddMonths(1).AddDays(-1);
+            var existing = await _database.Table<Habit>()
+                .FirstOrDefaultAsync(h => h.Name.ToLower() == habitName.ToLower() && h.IsActive);
 
-            return await _database.Table<DailyRecord>()
-                .Where(d => d.Date >= startDate && d.Date <= endDate)
-                .ToListAsync();
+            return existing != null;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error getting monthly records: {ex.Message}");
-            return new List<DailyRecord>();
+            Debug.WriteLine($"Error checking if habit exists: {ex.Message}");
+            return false;
+        }
+    }
+    // В класс DatabaseContext добавьте метод:
+    public async Task<bool> RemoveBaseHabitFromTodayAsync(int habitId)
+    {
+        try
+        {
+            // Проверяем, что привычка существует и является базовой
+            var habit = await _database.Table<Habit>()
+                .FirstOrDefaultAsync(h => h.Id == habitId && h.IsActive && h.IsBaseHabit);
+
+            if (habit == null)
+                return false;
+
+            // Удаляем выполнение привычки на сегодня
+            await _database.ExecuteAsync(
+                "DELETE FROM HabitCompletion WHERE HabitId = ? AND Date = ?",
+                habitId, DateTime.Today);
+
+            // Обновляем статистику сегодняшнего дня
+            await UpdateDailyStatsAsync(DateTime.Today);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error removing base habit from today: {ex.Message}");
+            return false;
         }
     }
 
-    public async Task<Dictionary<DateTime, DailyRecord>> GetRecordsDictionaryAsync(DateTime startDate, DateTime endDate)
+    // Метод для проверки существования привычки по имени сегодня
+    public async Task<bool> HabitExistsForTodayAsync(string habitName)
     {
         try
         {
-            var records = await _database.Table<DailyRecord>()
-                .Where(d => d.Date >= startDate.Date && d.Date <= endDate.Date)
-                .ToListAsync();
-
-            return records.ToDictionary(r => r.Date, r => r);
+            var existing = await _database.Table<Habit>()
+                .FirstOrDefaultAsync(h =>
+                    h.Name.ToLower() == habitName.ToLower() &&
+                    h.IsActive &&
+                    !h.IsBaseHabit && // Только небазовые
+                    h.CreatedDate.Date == DateTime.Today); // Созданные сегодня
+            return existing != null;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error getting records dictionary: {ex.Message}");
-            return new Dictionary<DateTime, DailyRecord>();
+            Debug.WriteLine($"Error checking if habit exists for today: {ex.Message}");
+            return false;
         }
     }
 }
