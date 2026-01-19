@@ -2,118 +2,181 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HabitTracker.Views.MainPage"
-             Title="Трекер привычек">
+             Title="HabitTracker"
+             BackgroundColor="#121212">
 
-    <StackLayout Padding="20" Spacing="20">
+    <StackLayout Padding="15" Spacing="15">
 
-        <!-- Заголовок -->
-        <Label Text="Трекер привычек" 
-               FontSize="24" 
-               FontAttributes="Bold"
-               HorizontalOptions="Center"/>
+        <!-- Заголовок в левом углу -->
+        <HorizontalStackLayout Spacing="10">
+            <Label Text="HabitTracker" 
+                   FontSize="20" 
+                   FontAttributes="Bold"
+                   TextColor="#BB86FC"
+                   VerticalOptions="Center"/>
 
-        <!-- Дата -->
-        <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-            <Button Text="◀" 
-                    x:Name="PrevDayBtn"
-                    WidthRequest="40"/>
-
-            <Label x:Name="DateLabel"
-                   Text="01.01.2024"
-                   FontSize="16"
-                   VerticalOptions="Center"
-                   WidthRequest="150"
-                   HorizontalTextAlignment="Center"/>
-
-            <Button Text="▶" 
-                    x:Name="NextDayBtn"
-                    WidthRequest="40"/>
+            <BoxView HorizontalOptions="FillAndExpand"
+                     Color="Transparent"/>
         </HorizontalStackLayout>
 
+        <!-- Дата -->
+        <Border Stroke="#333333"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 10"
+                BackgroundColor="#1E1E1E"
+                Padding="15">
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                <Button Text="◀" 
+                        x:Name="PrevDayBtn"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"
+                        BackgroundColor="#BB86FC"
+                        TextColor="White"/>
+
+                <Label x:Name="DateLabel"
+                       Text="01.01.2024"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       VerticalOptions="Center"
+                       WidthRequest="150"
+                       HorizontalTextAlignment="Center"/>
+
+                <Button Text="▶" 
+                        x:Name="NextDayBtn"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"
+                        BackgroundColor="#BB86FC"
+                        TextColor="White"/>
+            </HorizontalStackLayout>
+        </Border>
+
         <!-- Настроение -->
-        <StackLayout Spacing="10">
-            <Label Text="Настроение дня" 
-                   FontSize="18" 
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"/>
+        <Border Stroke="#333333"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 10"
+                BackgroundColor="#1E1E1E"
+                Padding="15">
+            <StackLayout Spacing="10">
+                <Label Text="Настроение дня" 
+                       FontSize="18" 
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       HorizontalOptions="Center"/>
 
-            <Label x:Name="MoodDescriptionLabel"
-                   Text="Нейтрально"
-                   FontSize="16"
-                   HorizontalOptions="Center"/>
+                <Label x:Name="MoodDescriptionLabel"
+                       Text="Нейтрально"
+                       FontSize="16"
+                       TextColor="#BBBBBB"
+                       HorizontalOptions="Center"/>
 
-            <!-- 7 цветных кнопок настроения -->
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="5">
-                <Button x:Name="MoodBtn1"
-                        Text="1"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                <!-- 7 цветных кнопок настроения -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
+                    <Button x:Name="MoodBtn1"
+                            Text="1"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn2"
-                        Text="2"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                    <Button x:Name="MoodBtn2"
+                            Text="2"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn3"
-                        Text="3"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                    <Button x:Name="MoodBtn3"
+                            Text="3"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn4"
-                        Text="4"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                    <Button x:Name="MoodBtn4"
+                            Text="4"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn5"
-                        Text="5"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                    <Button x:Name="MoodBtn5"
+                            Text="5"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn6"
-                        Text="6"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
+                    <Button x:Name="MoodBtn6"
+                            Text="6"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
 
-                <Button x:Name="MoodBtn7"
-                        Text="7"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        CornerRadius="20"/>
-            </HorizontalStackLayout>
+                    <Button x:Name="MoodBtn7"
+                            Text="7"
+                            WidthRequest="42"
+                            HeightRequest="42"
+                            CornerRadius="21"
+                            FontSize="14"/>
+                </HorizontalStackLayout>
 
-            <!-- Подписи -->
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="30">
-                <Label Text="Плохо" FontSize="12"/>
-                <Label Text="Нейтрально" FontSize="12"/>
-                <Label Text="Отлично" FontSize="12"/>
-            </HorizontalStackLayout>
-        </StackLayout>
+                <!-- Подписи -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="30">
+                    <Label Text="Плохо" 
+                           FontSize="12"
+                           TextColor="#8A2BE2"/>
+                    <Label Text="Нейтрально" 
+                           FontSize="12"
+                           TextColor="#A9A9A9"/>
+                    <Label Text="Отлично" 
+                           FontSize="12"
+                           TextColor="#DC143C"/>
+                </HorizontalStackLayout>
+            </StackLayout>
+        </Border>
 
         <!-- Привычки -->
-        <StackLayout Spacing="10">
-            <Label Text="Привычки" 
-                   FontSize="18" 
-                   FontAttributes="Bold"/>
+        <Border Stroke="#333333"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 10"
+                BackgroundColor="#1E1E1E"
+                Padding="15">
+            <StackLayout Spacing="12">
+                <HorizontalStackLayout>
+                    <Label Text="Привычки" 
+                           FontSize="18" 
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           HorizontalOptions="StartAndExpand"/>
 
-            <Button x:Name="AddHabitBtn"
-                    Text="+ Добавить привычку"
-                    HorizontalOptions="Center"/>
+                    <Button x:Name="AddHabitBtn"
+                            Text="+ Добавить"
+                            BackgroundColor="#BB86FC"
+                            TextColor="White"
+                            FontSize="14"
+                            HeightRequest="35"
+                            CornerRadius="8"/>
+                </HorizontalStackLayout>
 
-            <!-- Список привычек -->
-            <StackLayout x:Name="HabitsContainer"
-                         Spacing="5"/>
-        </StackLayout>
+                <!-- Список привычек -->
+                <StackLayout x:Name="HabitsContainer"
+                             Spacing="8"/>
+            </StackLayout>
+        </Border>
 
         <!-- Кнопки -->
         <Button x:Name="CalendarBtn"
-                Text="Календарь" 
-                HorizontalOptions="Center"/>
+                Text="📅 Календарь" 
+                BackgroundColor="#BB86FC"
+                TextColor="White"
+                FontSize="16"
+                HeightRequest="45"
+                CornerRadius="10"
+                HorizontalOptions="Fill"/>
 
     </StackLayout>
 </ContentPage>

@@ -1,5 +1,7 @@
 ﻿using HabitTracker.Database;
 using HabitTracker.Models;
+using Microsoft.Maui.Controls.Shapes;
+using System.Diagnostics;
 
 namespace HabitTracker.Views;
 
@@ -13,26 +15,33 @@ public partial class MainPage : ContentPage
 
     public MainPage()
     {
-        InitializeComponent();
-        _database = new DatabaseContext();
+        try
+        {
+            InitializeComponent();
+            _database = new DatabaseContext();
 
-        // Инициализация
-        LoadData();
+            // Инициализация
+            LoadData();
 
-        // Назначение обработчиков
-        PrevDayBtn.Clicked += OnPrevDayClicked;
-        NextDayBtn.Clicked += OnNextDayClicked;
-        CalendarBtn.Clicked += OnCalendarClicked;
-        AddHabitBtn.Clicked += OnAddHabitClicked;
+            // Назначение обработчиков
+            PrevDayBtn.Clicked += OnPrevDayClicked;
+            NextDayBtn.Clicked += OnNextDayClicked;
+            CalendarBtn.Clicked += OnCalendarClicked;
+            AddHabitBtn.Clicked += OnAddHabitClicked;
 
-        // Обработчики для кнопок настроения
-        MoodBtn1.Clicked += (s, e) => SetMood(1);
-        MoodBtn2.Clicked += (s, e) => SetMood(2);
-        MoodBtn3.Clicked += (s, e) => SetMood(3);
-        MoodBtn4.Clicked += (s, e) => SetMood(4);
-        MoodBtn5.Clicked += (s, e) => SetMood(5);
-        MoodBtn6.Clicked += (s, e) => SetMood(6);
-        MoodBtn7.Clicked += (s, e) => SetMood(7);
+            // Обработчики для кнопок настроения
+            MoodBtn1.Clicked += (s, e) => SetMood(1);
+            MoodBtn2.Clicked += (s, e) => SetMood(2);
+            MoodBtn3.Clicked += (s, e) => SetMood(3);
+            MoodBtn4.Clicked += (s, e) => SetMood(4);
+            MoodBtn5.Clicked += (s, e) => SetMood(5);
+            MoodBtn6.Clicked += (s, e) => SetMood(6);
+            MoodBtn7.Clicked += (s, e) => SetMood(7);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Ошибка инициализации: {ex.Message}");
+        }
     }
 
     private async void LoadData()
@@ -48,6 +57,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
+            Debug.WriteLine($"Ошибка загрузки данных: {ex.Message}");
             await DisplayAlert("Ошибка", $"Не удалось загрузить данные: {ex.Message}", "OK");
         }
     }
@@ -91,7 +101,7 @@ public partial class MainPage : ContentPage
         // Сбрасываем обводку у всех кнопок
         ResetButtonBorders();
 
-        // Обводим выбранную кнопку белым цветом
+        // Обводим выбранную кнопку фиолетовым цветом на темном фоне
         Button selectedButton = _currentMood switch
         {
             1 => MoodBtn1,
@@ -106,7 +116,7 @@ public partial class MainPage : ContentPage
 
         if (selectedButton != null)
         {
-            selectedButton.BorderColor = Colors.White;
+            selectedButton.BorderColor = Color.FromArgb("#BB86FC");  // Фиолетовая обводка
             selectedButton.BorderWidth = 3;
         }
 
@@ -136,7 +146,7 @@ public partial class MainPage : ContentPage
 
     private void SetButtonColors()
     {
-        // Устанавливаем цвета для каждой кнопки
+        // Устанавливаем цвета для каждой кнопки (яркие на темном фоне)
         MoodBtn1.BackgroundColor = Color.FromArgb("#8A2BE2");  // Фиолетовый
         MoodBtn1.TextColor = Colors.White;
 
@@ -235,11 +245,13 @@ public partial class MainPage : ContentPage
 
     private void AddHabitToUI(Habit habit)
     {
-        var habitFrame = new Frame
+        var habitBorder = new Border
         {
-            Padding = 10,
-            BackgroundColor = Colors.LightGray,
-            CornerRadius = 5
+            Padding = 12,
+            BackgroundColor = Color.FromArgb("#2D2D2D"),
+            Stroke = Color.FromArgb("#BB86FC"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) }
         };
 
         var habitLayout = new HorizontalStackLayout
@@ -251,6 +263,7 @@ public partial class MainPage : ContentPage
         {
             Text = habit.Name,
             FontSize = 16,
+            TextColor = Colors.White,
             VerticalOptions = LayoutOptions.Center,
             HorizontalOptions = LayoutOptions.StartAndExpand
         };
@@ -262,8 +275,9 @@ public partial class MainPage : ContentPage
             HeightRequest = 40,
             CornerRadius = 20,
             BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && _habitCompletionStatus[habit.Id]
-                ? Colors.Green
-                : Colors.LightGreen
+                ? Color.FromArgb("#4CAF50")
+                : Color.FromArgb("#1B5E20"),
+            TextColor = Colors.White
         };
 
         var notDoneBtn = new Button
@@ -273,8 +287,9 @@ public partial class MainPage : ContentPage
             HeightRequest = 40,
             CornerRadius = 20,
             BackgroundColor = _habitCompletionStatus.ContainsKey(habit.Id) && !_habitCompletionStatus[habit.Id]
-                ? Colors.Red
-                : Colors.LightPink
+                ? Color.FromArgb("#F44336")
+                : Color.FromArgb("#B71C1C"),
+            TextColor = Colors.White
         };
 
         var deleteBtn = new Button
@@ -283,20 +298,21 @@ public partial class MainPage : ContentPage
             WidthRequest = 40,
             HeightRequest = 40,
             CornerRadius = 20,
-            BackgroundColor = Colors.LightGray
+            BackgroundColor = Color.FromArgb("#424242"),
+            TextColor = Colors.White
         };
 
         // Обработчики
         doneBtn.Clicked += async (s, e) =>
         {
             await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, true);
-            LoadData(); // Перезагружаем данные
+            LoadData();
         };
 
         notDoneBtn.Clicked += async (s, e) =>
         {
             await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, false);
-            LoadData(); // Перезагружаем данные
+            LoadData();
         };
 
         deleteBtn.Clicked += async (s, e) =>
@@ -310,7 +326,7 @@ public partial class MainPage : ContentPage
             if (confirm)
             {
                 await _database.DeleteHabitAsync(habit.Id);
-                LoadData(); // Перезагружаем данные
+                LoadData();
             }
         };
 
@@ -319,7 +335,7 @@ public partial class MainPage : ContentPage
         habitLayout.Children.Add(notDoneBtn);
         habitLayout.Children.Add(deleteBtn);
 
-        habitFrame.Content = habitLayout;
-        HabitsContainer.Children.Add(habitFrame);
+        habitBorder.Content = habitLayout;
+        HabitsContainer.Children.Add(habitBorder);
     }
 }
