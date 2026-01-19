@@ -8,7 +8,6 @@
     <ScrollView>
         <StackLayout Padding="15" Spacing="15">
 
-            <!-- Habits list -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
@@ -31,7 +30,6 @@
                                 CornerRadius="8"/>
                     </HorizontalStackLayout>
 
-                    <!-- Habits list -->
                     <StackLayout x:Name="HabitsContainer"
                                  Spacing="8"/>
                 </StackLayout>

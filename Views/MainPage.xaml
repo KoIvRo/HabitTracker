@@ -8,7 +8,6 @@
     <ScrollView>
         <StackLayout Padding="15" Spacing="15">
 
-            <!-- Date -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
@@ -41,7 +40,6 @@
                 </HorizontalStackLayout>
             </Border>
 
-            <!-- Mood -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
@@ -59,7 +57,6 @@
                            TextColor="#BBBBBB"
                            HorizontalOptions="Center"/>
 
-                    <!-- 7 mood buttons -->
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
                         <Button x:Name="MoodBtn1"
                                 Text="1"
@@ -113,7 +110,6 @@
                 </StackLayout>
             </Border>
 
-            <!-- Notes -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
@@ -135,7 +131,6 @@
                                 CornerRadius="8"/>
                     </HorizontalStackLayout>
 
-                    <!-- Notes list -->
                     <StackLayout x:Name="HabitsContainer"
                                  Spacing="8"/>
                 </StackLayout>

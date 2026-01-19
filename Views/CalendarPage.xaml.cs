@@ -30,34 +30,27 @@ public partial class CalendarPage : ContentPage
         LoadCalendarData();
     }
 
+    /// <summary>
+    /// Загружает данные календаря за последние 64 дня и рассчитывает статистику выполнения привычек.
+    /// Для каждого дня вычисляется процент выполнения и загружается настроение.
+    /// </summary>
     private async void LoadCalendarData()
     {
         try
         {
-            // Calculate date range (last 64 days)
             DateTime endDate = DateTime.Today;
-            DateTime startDate = endDate.AddDays(-63); // 64 days total
+            DateTime startDate = endDate.AddDays(-63);
 
-            // Load records for this period
-            var records = await _database.GetRecordsDictionaryAsync(startDate, endDate);
-            _records = records;
+            _records = await _database.GetRecordsDictionaryAsync(startDate, endDate);
 
-            // Calculate completion rates
             _completionRates.Clear();
-            foreach (var record in records)
+            foreach (var record in _records)
             {
-                if (record.Value.TotalHabits > 0)
-                {
-                    double rate = (double)record.Value.CompletedHabits / record.Value.TotalHabits;
-                    _completionRates[record.Key] = rate;
-                }
-                else
-                {
-                    _completionRates[record.Key] = 0;
-                }
+                _completionRates[record.Key] = record.Value.TotalHabits > 0
+                    ? (double)record.Value.CompletedHabits / record.Value.TotalHabits
+                    : 0;
             }
 
-            // Generate calendar grid
             GenerateCalendarGrid();
         }
         catch (Exception ex)
@@ -66,14 +59,16 @@ public partial class CalendarPage : ContentPage
         }
     }
 
+    /// <summary>
+    /// Генерирует сетку календаря 8x8 (64 дня) начиная с даты 64 дня назад.
+    /// Каждый день представлен квадратом с цветовой индикацией выполнения привычек.
+    /// </summary>
     private void GenerateCalendarGrid()
     {
         CalendarContainer.Children.Clear();
 
-        DateTime today = DateTime.Today;
-        DateTime startDate = today.AddDays(-63);
+        DateTime startDate = DateTime.Today.AddDays(-63);
 
-        // Create 8 rows of 8 days (8x8 grid = 64 days)
         for (int row = 0; row < 8; row++)
         {
             var rowLayout = new HorizontalStackLayout
@@ -84,41 +79,35 @@ public partial class CalendarPage : ContentPage
 
             for (int col = 0; col < 8; col++)
             {
-                int dayIndex = row * 8 + col;
-                DateTime currentDate = startDate.AddDays(dayIndex);
-
-                var dayBox = CreateDayBox(currentDate);
-                rowLayout.Children.Add(dayBox);
+                rowLayout.Children.Add(CreateDayBox(startDate.AddDays(row * 8 + col)));
             }
 
             CalendarContainer.Children.Add(rowLayout);
         }
     }
 
+    /// <summary>
+    /// Создает визуальный элемент для отображения дня в календаре.
+    /// Цвет фона зависит от процента выполнения привычек, цвет границы - от настроения.
+    /// </summary>
+    /// <param name="date">Дата для отображения</param>
+    /// <returns>Frame с визуальным представлением дня</returns>
     private View CreateDayBox(DateTime date)
     {
-        // Get record for this date
         _records.TryGetValue(date, out var record);
         _completionRates.TryGetValue(date, out var completionRate);
-
-        // Calculate background color based on completion rate
-        Color backgroundColor = CalculateCompletionColor(completionRate);
-
-        // Calculate border color based on mood
-        Color borderColor = CalculateMoodColor(record?.Mood ?? 0);
 
         var dayFrame = new Frame
         {
             WidthRequest = 35,
             HeightRequest = 35,
             CornerRadius = 4,
-            BackgroundColor = backgroundColor,
-            BorderColor = borderColor,
+            BackgroundColor = CalculateCompletionColor(completionRate),
+            BorderColor = CalculateMoodColor(record?.Mood ?? 0),
             HasShadow = false,
             Padding = 0
         };
 
-        // Add date label (only day number)
         var dayLabel = new Label
         {
             Text = date.Day.ToString(),
@@ -130,7 +119,6 @@ public partial class CalendarPage : ContentPage
 
         dayFrame.Content = dayLabel;
 
-        // Add tap gesture
         var tapGesture = new TapGestureRecognizer();
         tapGesture.Tapped += (s, e) => OnDayTapped(date, record, completionRate);
         dayFrame.GestureRecognizers.Add(tapGesture);
@@ -138,44 +126,55 @@ public partial class CalendarPage : ContentPage
         return dayFrame;
     }
 
+    /// <summary>
+    /// Вычисляет цвет фона дня на основе процента выполнения привычек.
+    /// От темного зеленого (#121212) до яркого зеленого (#4CAF50) в зависимости от completionRate.
+    /// </summary>
+    /// <param name="completionRate">Процент выполнения привычек от 0 до 1</param>
+    /// <returns>Цвет фона для отображения</returns>
     private Color CalculateCompletionColor(double completionRate)
     {
-        // Darker green for lower completion, brighter for higher
-        // completionRate from 0 to 1
-        if (completionRate <= 0)
-            return Color.FromArgb("#121212"); // Background color
+        if (completionRate <= 0) return Color.FromArgb("#121212");
 
-        // Scale from dark green to bright green
-        float factor = (float)Math.Pow(completionRate, 0.7); // Non-linear for better visual
-
-        // Extract RGB components from #4CAF50
-        byte r = (byte)(0x4C * factor);
-        byte g = (byte)(0xAF * factor);
-        byte b = (byte)(0x50 * factor);
-
-        return Color.FromRgb(r, g, b);
+        float factor = (float)Math.Pow(completionRate, 0.7);
+        return Color.FromRgb(
+            (byte)(0x4C * factor),
+            (byte)(0xAF * factor),
+            (byte)(0x50 * factor)
+        );
     }
 
+    /// <summary>
+    /// Определяет цвет границы дня на основе уровня настроения.
+    /// Соответствует цветовой схеме кнопок настроения на главной странице.
+    /// </summary>
+    /// <param name="mood">Уровень настроения от 0 до 7</param>
+    /// <returns>Цвет границы соответствующего настроению</returns>
     private Color CalculateMoodColor(int mood)
     {
         return mood switch
         {
-            1 => Color.FromArgb("#8A2BE2"), // Purple (Very bad)
-            2 => Color.FromArgb("#1E90FF"), // Blue (Bad)
-            3 => Color.FromArgb("#00BFFF"), // Light blue (Somewhat bad)
-            4 => Color.FromArgb("#A9A9A9"), // Gray (Neutral)
-            5 => Color.FromArgb("#FFD700"), // Yellow (Good)
-            6 => Color.FromArgb("#FF8C00"), // Orange (Very good)
-            7 => Color.FromArgb("#DC143C"), // Red (Excellent)
-            _ => Color.FromArgb("#333333")  // Default border
+            1 => Color.FromArgb("#8A2BE2"),
+            2 => Color.FromArgb("#1E90FF"),
+            3 => Color.FromArgb("#00BFFF"),
+            4 => Color.FromArgb("#A9A9A9"),
+            5 => Color.FromArgb("#FFD700"),
+            6 => Color.FromArgb("#FF8C00"),
+            7 => Color.FromArgb("#DC143C"),
+            _ => Color.FromArgb("#333333")
         };
     }
 
+    /// <summary>
+    /// Обрабатывает нажатие на день календаря, отображая детальную информацию о выбранном дне.
+    /// Показывает настроение, статистику выполнения и делает доступной кнопку перехода к дню.
+    /// </summary>
+    /// <param name="date">Выбранная дата</param>
+    /// <param name="record">Запись дня из базы данных</param>
+    /// <param name="completionRate">Процент выполнения привычек</param>
     private void OnDayTapped(DateTime date, DailyRecord record, double completionRate)
     {
         _selectedDate = date;
-
-        // Update selected day info
         SelectedDateLabel.Text = date.ToString("dd.MM.yyyy");
 
         if (record != null)
@@ -201,13 +200,14 @@ public partial class CalendarPage : ContentPage
             CompletionLabel.Text = "No data for this day";
         }
 
-        // Show day info
         DayInfoBorder.IsVisible = true;
     }
 
+    /// <summary>
+    /// Переход к главной странице с выбранной датой для просмотра и редактирования привычек дня.
+    /// </summary>
     private async void OnGoToDayClicked(object sender, EventArgs e)
     {
-        // Navigate back to MainPage with the selected date
         await Shell.Current.GoToAsync($"//Today?date={_selectedDate:yyyy-MM-dd}");
     }
 }

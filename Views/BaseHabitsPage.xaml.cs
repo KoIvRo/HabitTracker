@@ -32,7 +32,6 @@ public partial class BaseHabitsPage : ContentPage
     {
         try
         {
-            // Load only active basic habits
             _baseHabits = await _database.GetBaseHabitsAsync();
             UpdateHabitsUI();
         }
@@ -66,6 +65,11 @@ public partial class BaseHabitsPage : ContentPage
         }
     }
 
+    /// <summary>
+    /// Создает UI-элемент для базовой привычки с кнопкой удаления.
+    /// Базовая привычка отображается с зеленой границей и может быть удалена только из будущих дней.
+    /// </summary>
+    /// <param name="habit">Базовая привычка для отображения</param>
     private void AddHabitToUI(Habit habit)
     {
         var frame = new Frame
@@ -101,7 +105,6 @@ public partial class BaseHabitsPage : ContentPage
             CornerRadius = 8
         };
 
-        // Handler for deleting basic habit from future days
         deleteBtn.Clicked += async (s, e) =>
         {
             bool confirm = await DisplayAlert(
@@ -117,12 +120,8 @@ public partial class BaseHabitsPage : ContentPage
             {
                 try
                 {
-                    // Remove habit from future days
                     var success = await _database.RemoveBaseHabitFromFutureAsync(habit.Id);
-                    if (success)
-                    {
-                        LoadBaseHabits();
-                    }
+                    if (success) LoadBaseHabits();
                 }
                 catch (Exception ex)
                 {
@@ -133,11 +132,14 @@ public partial class BaseHabitsPage : ContentPage
 
         habitLayout.Children.Add(habitLabel);
         habitLayout.Children.Add(deleteBtn);
-
         frame.Content = habitLayout;
         HabitsContainer.Children.Add(frame);
     }
 
+    /// <summary>
+    /// Создает новую базовую привычку, которая будет появляться во всех будущих днях.
+    /// Проверяет уникальность имени привычки перед добавлением.
+    /// </summary>
     private async void OnAddHabitClicked(object sender, EventArgs e)
     {
         string habitName = await DisplayPromptAsync(
@@ -149,15 +151,12 @@ public partial class BaseHabitsPage : ContentPage
 
         if (!string.IsNullOrWhiteSpace(habitName))
         {
-            // Check if habit already exists
-            var exists = await _database.HabitExistsAsync(habitName);
-            if (exists)
+            if (await _database.HabitExistsAsync(habitName))
             {
                 await DisplayAlert("Warning", "Habit with this name already exists.", "OK");
                 return;
             }
 
-            // Create basic habit
             var habit = new Habit
             {
                 Name = habitName.Trim(),

@@ -8,7 +8,6 @@
     <ScrollView>
         <StackLayout Padding="15" Spacing="20">
 
-            <!-- Calendar Grid -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
@@ -20,13 +19,11 @@
                            TextColor="White"
                            HorizontalOptions="Center"/>
 
-                    <!-- Calendar grid will be generated in code -->
                     <StackLayout x:Name="CalendarContainer"
                                  Spacing="2"/>
                 </StackLayout>
             </Border>
 
-            <!-- Selected day info -->
             <Border Stroke="#333333"
                     StrokeThickness="1"
                     BackgroundColor="#1E1E1E"
