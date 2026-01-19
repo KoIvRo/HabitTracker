@@ -35,93 +35,56 @@
             <Label Text="Настроение дня" 
                    FontSize="18" 
                    FontAttributes="Bold"
-                   HorizontalOptions="Center"/>
+               HorizontalOptions="Center"/>
 
             <Label x:Name="MoodDescriptionLabel"
                    Text="Нейтрально"
                    FontSize="16"
                    HorizontalOptions="Center"/>
 
-            <!-- 7 кнопок настроения ВНУТРИ Border -->
+            <!-- 7 цветных кнопок настроения -->
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="5">
+                <Button x:Name="MoodBtn1"
+                        Text="1"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder1" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn1"
-                            Text="1"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
+                <Button x:Name="MoodBtn2"
+                        Text="2"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder2" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn2"
-                            Text="2"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
+                <Button x:Name="MoodBtn3"
+                        Text="3"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder3" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn3"
-                            Text="3"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
+                <Button x:Name="MoodBtn4"
+                        Text="4"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder4" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn4"
-                            Text="4"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
+                <Button x:Name="MoodBtn5"
+                        Text="5"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder5" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn5"
-                            Text="5"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
+                <Button x:Name="MoodBtn6"
+                        Text="6"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
 
-                <Border x:Name="MoodBorder6" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn6"
-                            Text="6"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
-
-                <Border x:Name="MoodBorder7" 
-                       Stroke="Transparent" 
-                       StrokeThickness="0"
-                       Padding="0"
-                       StrokeShape="RoundRectangle 20">
-                    <Button x:Name="MoodBtn7"
-                            Text="7"
-                            WidthRequest="40"
-                            HeightRequest="40"/>
-                </Border>
-
+                <Button x:Name="MoodBtn7"
+                        Text="7"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"/>
             </HorizontalStackLayout>
 
             <!-- Подписи -->
