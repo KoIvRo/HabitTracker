@@ -28,6 +28,7 @@ public partial class MainPage : ContentPage
             NextDayBtn.Clicked += OnNextDayClicked;
             CalendarBtn.Clicked += OnCalendarClicked;
             AddHabitBtn.Clicked += OnAddHabitClicked;
+            BaseHabitsBtn2.Clicked += OnBaseHabitsClicked;
 
             // Обработчики для кнопок настроения
             MoodBtn1.Clicked += (s, e) => SetMood(1);
@@ -52,6 +53,7 @@ public partial class MainPage : ContentPage
             await LoadHabits();
             await LoadMood();
             UpdateDateDisplay();
+            UpdateDayInfo();
             UpdateMoodDisplay();
             UpdateHabitsUI();
         }
@@ -64,7 +66,8 @@ public partial class MainPage : ContentPage
 
     private async Task LoadHabits()
     {
-        _habits = await _database.GetHabitsAsync();
+        // Загружаем привычки для конкретной даты
+        _habits = await _database.GetHabitsForDateAsync(_selectedDate);
         _habitCompletionStatus.Clear();
 
         // Загружаем статус выполнения для каждой привычки на выбранную дату
@@ -91,6 +94,25 @@ public partial class MainPage : ContentPage
     private void UpdateDateDisplay()
     {
         DateLabel.Text = _selectedDate.ToString("dd.MM.yyyy");
+    }
+
+    private void UpdateDayInfo()
+    {
+        if (_selectedDate.Date == DateTime.Today.Date)
+        {
+            DayInfoLabel.Text = "Вы просматриваете сегодняшний день. Вы можете отмечать выполнение привычек.";
+            DayInfoLabel.TextColor = Color.FromArgb("#4CAF50");
+        }
+        else if (_selectedDate.Date < DateTime.Today.Date)
+        {
+            DayInfoLabel.Text = "Вы просматриваете прошедший день. Вы не можете изменять привычки.";
+            DayInfoLabel.TextColor = Color.FromArgb("#FF9800");
+        }
+        else
+        {
+            DayInfoLabel.Text = "Вы просматриваете будущий день. Вы не можете изменять привычки.";
+            DayInfoLabel.TextColor = Color.FromArgb("#2196F3");
+        }
     }
 
     private void UpdateMoodDisplay()
@@ -195,6 +217,13 @@ public partial class MainPage : ContentPage
 
     private async void SetMood(int mood)
     {
+        // Проверяем, можно ли изменять настроение для этой даты
+        if (_selectedDate.Date != DateTime.Today.Date)
+        {
+            await DisplayAlert("Информация", "Вы можете изменять настроение только для сегодняшнего дня.", "OK");
+            return;
+        }
+
         _currentMood = mood;
         UpdateMoodDisplay();
 
@@ -227,17 +256,43 @@ public partial class MainPage : ContentPage
         await DisplayAlert("Информация", "Календарь будет добавлен позже", "OK");
     }
 
+    private async void OnBaseHabitsClicked(object sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new BaseHabitsPage());
+    }
+
     private async void OnAddHabitClicked(object sender, EventArgs e)
     {
+        // Проверяем, можно ли добавлять привычки для этой даты
+        if (_selectedDate.Date != DateTime.Today.Date)
+        {
+            await DisplayAlert("Информация", "Вы можете добавлять привычки только для сегодняшнего дня.", "OK");
+            return;
+        }
+
         string habitName = await DisplayPromptAsync(
-            "Новая привычка",
-            "Введите название привычки:",
+            "Новая привычка на сегодня",
+            "Введите название привычки (будет добавлена только в этот день):",
             "Добавить",
             "Отмена");
 
         if (!string.IsNullOrWhiteSpace(habitName))
         {
-            var habit = new Habit { Name = habitName };
+            // Проверяем, не существует ли уже такая привычка сегодня
+            var exists = await _database.HabitExistsForTodayAsync(habitName);
+            if (exists)
+            {
+                await DisplayAlert("Внимание", "Привычка с таким названием уже существует сегодня.", "OK");
+                return;
+            }
+
+            // Создаем привычку только для текущего дня (не базовую)
+            var habit = new Habit
+            {
+                Name = habitName.Trim(),
+                IsBaseHabit = false, // ВАЖНО: false - только для сегодняшнего дня!
+                CreatedDate = DateTime.Today // ВАЖНО: сегодняшняя дата
+            };
             await _database.AddHabitAsync(habit);
             LoadData();
         }
@@ -249,7 +304,7 @@ public partial class MainPage : ContentPage
         {
             Padding = 12,
             BackgroundColor = Color.FromArgb("#2D2D2D"),
-            Stroke = Color.FromArgb("#BB86FC"),
+            Stroke = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC"),
             StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(8) }
         };
@@ -259,14 +314,29 @@ public partial class MainPage : ContentPage
             Spacing = 10
         };
 
-        var habitLabel = new Label
+        var habitLabel = new StackLayout
         {
-            Text = habit.Name,
-            FontSize = 16,
-            TextColor = Colors.White,
+            Spacing = 2,
             VerticalOptions = LayoutOptions.Center,
             HorizontalOptions = LayoutOptions.StartAndExpand
         };
+
+        var nameLabel = new Label
+        {
+            Text = habit.Name,
+            FontSize = 16,
+            TextColor = Colors.White
+        };
+
+        var typeLabel = new Label
+        {
+            Text = habit.IsBaseHabit ? "(Базовая)" : "(Только сегодня)",
+            FontSize = 12,
+            TextColor = habit.IsBaseHabit ? Color.FromArgb("#4CAF50") : Color.FromArgb("#BB86FC")
+        };
+
+        habitLabel.Children.Add(nameLabel);
+        habitLabel.Children.Add(typeLabel);
 
         var doneBtn = new Button
         {
@@ -302,31 +372,90 @@ public partial class MainPage : ContentPage
             TextColor = Colors.White
         };
 
+        // Активируем кнопки только для сегодняшнего дня
+        bool canModify = _selectedDate.Date == DateTime.Today.Date;
+        doneBtn.IsEnabled = canModify;
+        notDoneBtn.IsEnabled = canModify;
+        deleteBtn.IsEnabled = canModify;
+
+        if (!canModify)
+        {
+            doneBtn.BackgroundColor = Color.FromArgb("#555555");
+            notDoneBtn.BackgroundColor = Color.FromArgb("#555555");
+            deleteBtn.BackgroundColor = Color.FromArgb("#555555");
+        }
+
         // Обработчики
         doneBtn.Clicked += async (s, e) =>
         {
+            if (!canModify) return;
             await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, true);
             LoadData();
         };
 
         notDoneBtn.Clicked += async (s, e) =>
         {
+            if (!canModify) return;
             await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, false);
             LoadData();
         };
 
+        // В методе AddHabitToUI в MainPage.xaml.cs:
         deleteBtn.Clicked += async (s, e) =>
         {
-            bool confirm = await DisplayAlert(
-                "Удаление привычки",
-                $"Вы уверены, что хотите удалить привычку \"{habit.Name}\"?",
-                "Да",
-                "Нет");
+            if (!canModify) return;
 
-            if (confirm)
+            if (habit.IsBaseHabit)
             {
-                await _database.DeleteHabitAsync(habit.Id);
-                LoadData();
+                // Для базовой привычки предлагаем удалить только из текущего дня
+                bool confirm = await DisplayAlert(
+                    "Удаление базовой привычки",
+                    $"Вы уверены, что хотите удалить базовую привычку \"{habit.Name}\" только из сегодняшнего дня?\n" +
+                    "✓ Она останется в базовом списке\n" +
+                    "✓ Будет появляться в будущих днях\n" +
+                    "✓ Останется в прошедших днях\n" +
+                    "✓ Удалится только из сегодняшнего дня",
+                    "Удалить только сегодня",
+                    "Отмена");
+
+                if (confirm)
+                {
+                    try
+                    {
+                        // Удаляем привычку из сегодняшнего дня
+                        await _database.RemoveHabitFromDayAsync(habit.Id, _selectedDate);
+                        LoadData();
+                        await DisplayAlert("Успех", $"Привычка \"{habit.Name}\" удалена из сегодняшнего дня", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Ошибка", $"Не удалось удалить привычку: {ex.Message}", "OK");
+                    }
+                }
+            }
+            else
+            {
+                // Для обычной привычки удаляем полностью
+                bool confirm = await DisplayAlert(
+                    "Удаление привычки",
+                    $"Вы уверены, что хотите удалить привычку \"{habit.Name}\"?\n" +
+                    "Эта привычка удалится полностью из всех дней.",
+                    "Да, удалить",
+                    "Отмена");
+
+                if (confirm)
+                {
+                    try
+                    {
+                        await _database.DeleteHabitAsync(habit.Id);
+                        LoadData();
+                        await DisplayAlert("Успех", "Привычка удалена", "OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        await DisplayAlert("Ошибка", $"Не удалось удалить привычку: {ex.Message}", "OK");
+                    }
+                }
             }
         };
 

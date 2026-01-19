@@ -3,13 +3,17 @@
        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
        xmlns:views="clr-namespace:HabitTracker.Views"
        x:Class="HabitTracker.AppShell"
-       Title="HabitTracker">
+       Title="HabitTracker"
+       BackgroundColor="#121212"
+       FlyoutBackgroundColor="#1E1E1E"
+       TitleColor="#BB86FC">
 
-    <!-- ПРОСТАЯ запись, без ContentTemplate -->
-    <ShellContent>
-        <ShellContent.Content>
-            <views:MainPage />
-        </ShellContent.Content>
-    </ShellContent>
+    <!-- Страницы -->
+    <ShellContent Title="Главная"
+                  Icon="home.png"
+                  ContentTemplate="{DataTemplate views:MainPage}" />
 
+    <ShellContent Title="Базовые привычки"
+                  Icon="list.png"
+                  ContentTemplate="{DataTemplate views:BaseHabitsPage}" />
 </Shell>

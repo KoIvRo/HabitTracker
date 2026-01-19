@@ -7,6 +7,12 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
-        MainPage = new MainPage();
+
+        // Используем NavigationPage для возможности перехода между страницами
+        MainPage = new NavigationPage(new MainPage())
+        {
+            BarBackgroundColor = Color.FromArgb("#121212"),
+            BarTextColor = Colors.White,
+        };
     }
 }

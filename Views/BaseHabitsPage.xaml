@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HabitTracker.Views.BaseHabitsPage"
+             Title="Базовые привычки"
+             BackgroundColor="#121212">
+
+    <ScrollView>
+        <StackLayout Padding="15" Spacing="15">
+
+            <!-- Заголовок -->
+            <HorizontalStackLayout>
+                <Label Text="Базовые привычки" 
+                       FontSize="24" 
+                       FontAttributes="Bold"
+                       TextColor="#4CAF50"
+                       HorizontalOptions="StartAndExpand"/>
+            </HorizontalStackLayout>
+
+            <!-- Информация -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15">
+                <StackLayout Spacing="8">
+                    <Label Text="✓ Эти привычки автоматически добавляются во все будущие дни"
+                           FontSize="14"
+                           TextColor="#BBBBBB"
+                           LineBreakMode="WordWrap"/>
+
+                    <Label Text="✓ При удалении остаются в прошедших днях"
+                           FontSize="14"
+                           TextColor="#4CAF50"
+                           LineBreakMode="WordWrap"/>
+
+                    <Label Text="✓ Чтобы удалить из сегодняшнего дня - сделайте это на главной странице"
+                           FontSize="14"
+                           TextColor="#FF9800"
+                           LineBreakMode="WordWrap"/>
+                </StackLayout>
+            </Border>
+
+            <!-- Список базовых привычек -->
+            <Border Stroke="#333333"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    BackgroundColor="#1E1E1E"
+                    Padding="15">
+                <StackLayout Spacing="12">
+                    <HorizontalStackLayout>
+                        <Label Text="Список базовых привычек" 
+                               FontSize="18" 
+                               FontAttributes="Bold"
+                               TextColor="White"
+                               HorizontalOptions="StartAndExpand"/>
+
+                        <Button x:Name="AddHabitBtn"
+                                Text="+ Добавить"
+                                Clicked="OnAddHabitClicked"
+                                BackgroundColor="#4CAF50"
+                                TextColor="White"
+                                FontSize="14"
+                                HeightRequest="35"
+                                CornerRadius="8"/>
+                    </HorizontalStackLayout>
+
+                    <!-- Список привычек -->
+                    <StackLayout x:Name="HabitsContainer"
+                                 Spacing="8"/>
+                </StackLayout>
+            </Border>
+
+        </StackLayout>
+    </ScrollView>
+</ContentPage>

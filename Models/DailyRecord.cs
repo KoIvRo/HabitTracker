@@ -1,13 +1,16 @@
-﻿// Models/DailyRecord.cs
-using SQLite;
+﻿using SQLite;
 
 namespace HabitTracker.Models;
 
 public class DailyRecord
 {
-    [PrimaryKey]
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+
+    [Indexed(Unique = true)]
     public DateTime Date { get; set; }
-    public int Mood { get; set; } // 1-10
+
+    public int Mood { get; set; } // 1-7
     public int CompletedHabits { get; set; }
     public int TotalHabits { get; set; }
 }
