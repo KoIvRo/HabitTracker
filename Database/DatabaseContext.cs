@@ -421,7 +421,16 @@ public class DatabaseContext
         try
         {
             var habits = await GetHabitsForDateAsync(date);
-            var completedCount = habits.Count(h => GetHabitCompletionStatusAsync(h.Id, date).Result);
+            var completedCount = 0;
+
+            foreach (var habit in habits)
+            {
+                var isCompleted = await GetHabitCompletionStatusAsync(habit.Id, date);
+                if (isCompleted)
+                {
+                    completedCount++;
+                }
+            }
 
             var record = await GetDailyRecordAsync(date) ?? new DailyRecord { Date = date.Date };
             record.CompletedHabits = completedCount;

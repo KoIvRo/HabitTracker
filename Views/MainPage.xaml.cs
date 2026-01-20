@@ -109,8 +109,14 @@ public partial class MainPage : ContentPage
 
         Button selectedButton = _currentMood switch
         {
-            1 => MoodBtn1, 2 => MoodBtn2, 3 => MoodBtn3, 4 => MoodBtn4,
-            5 => MoodBtn5, 6 => MoodBtn6, 7 => MoodBtn7, _ => null
+            1 => MoodBtn1,
+            2 => MoodBtn2,
+            3 => MoodBtn3,
+            4 => MoodBtn4,
+            5 => MoodBtn5,
+            6 => MoodBtn6,
+            7 => MoodBtn7,
+            _ => null
         };
 
         if (selectedButton != null)
@@ -121,8 +127,14 @@ public partial class MainPage : ContentPage
 
         MoodDescriptionLabel.Text = _currentMood switch
         {
-            1 => "Very bad", 2 => "Bad", 3 => "Somewhat bad", 4 => "Neutral",
-            5 => "Good", 6 => "Very good", 7 => "Excellent!", _ => "Not selected"
+            1 => "Very bad",
+            2 => "Bad",
+            3 => "Somewhat bad",
+            4 => "Neutral",
+            5 => "Good",
+            6 => "Very good",
+            7 => "Excellent!",
+            _ => "Not selected"
         };
     }
 
@@ -171,12 +183,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Добавляет эффекты наведения и отведения для кнопок настроения.
-    /// Использует Windows-specific API для обработки событий PointerEntered/PointerExited.
-    /// При наведении: увеличение на 20%, белая граница, свечение.
-    /// При отведении: возврат к исходному размеру, восстановление состояния.
-    /// </summary>
     private void AddHoverEffectsToMoodButtons()
     {
         var buttons = new[] { MoodBtn1, MoodBtn2, MoodBtn3, MoodBtn4, MoodBtn5, MoodBtn6, MoodBtn7 };
@@ -231,11 +237,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Устанавливает настроение для текущей даты и сохраняет в базу данных.
-    /// Можно изменять только настроение для сегодняшнего дня.
-    /// </summary>
-    /// <param name="mood">Уровень настроения от 1 (очень плохо) до 7 (отлично)</param>
     private async void SetMood(int mood)
     {
         if (_selectedDate.Date != DateTime.Today.Date)
@@ -301,12 +302,6 @@ public partial class MainPage : ContentPage
         }
     }
 
-    /// <summary>
-    /// Создает UI-элемент для привычки с кнопками выполнения и удаления.
-    /// Кнопка выполнения меняет цвет с серого на фиолетовый при выполнении.
-    /// Добавляет эффекты наведения для обеих кнопок.
-    /// </summary>
-    /// <param name="habit">Привычка для отображения</param>
     private void AddHabitToUI(Habit habit)
     {
         var isCompleted = _habitCompletionStatus.ContainsKey(habit.Id) && _habitCompletionStatus[habit.Id];
@@ -405,8 +400,13 @@ public partial class MainPage : ContentPage
         checkButton.Clicked += async (s, e) =>
         {
             if (!canModify) return;
+
+            // Обновляем UI сразу для отзывчивости
+            _habitCompletionStatus[habit.Id] = !isCompleted;
+            UpdateHabitsUI();
+
+            // Затем обновляем в базе
             await _database.SetHabitCompletionAsync(habit.Id, _selectedDate, !isCompleted);
-            LoadData();
         };
 
         deleteButton.Clicked += async (s, e) =>
@@ -470,15 +470,6 @@ public partial class MainPage : ContentPage
         HabitsContainer.Children.Add(frame);
     }
 
-    /// <summary>
-    /// Добавляет эффекты наведения для кнопок привычек.
-    /// Для кнопки выполнения: зеленый цвет при наведении на невыполненную, ярко-фиолетовый для выполненной.
-    /// Для кнопки удаления: красный цвет при наведении.
-    /// Использует Windows-specific API для обработки событий PointerEntered/PointerExited.
-    /// </summary>
-    /// <param name="checkButton">Кнопка выполнения привычки</param>
-    /// <param name="deleteButton">Кнопка удаления привычки</param>
-    /// <param name="isCompleted">Флаг выполнения привычки</param>
     private void AddHoverEffectsToHabitButtons(Button checkButton, Button deleteButton, bool isCompleted)
     {
         var checkOriginalBackground = checkButton.BackgroundColor;
@@ -496,10 +487,6 @@ public partial class MainPage : ContentPage
 #endif
     }
 
-    /// <summary>
-    /// Windows-specific реализация эффектов наведения для кнопок привычек.
-    /// Обрабатывает события PointerEntered и PointerExited через WinUI API.
-    /// </summary>
 #if WINDOWS
     private void AddWindowsHoverEffects(
         Button checkButton, Button deleteButton, bool isCompleted,
